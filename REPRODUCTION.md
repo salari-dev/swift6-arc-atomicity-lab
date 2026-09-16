@@ -9,6 +9,16 @@ From this directory, run both scripts in order:
 ./run-simulator-validation.sh
 ```
 
+To regenerate the source-backed visual from a fresh clone, install the Python dependency and fetch the exact sparse Swift source checkout first:
+
+```sh
+python3 -m pip install -r requirements.txt
+./scripts/fetch-swift-source.sh
+python3 scripts/generate-evidence-visuals.py
+```
+
+The fetch script downloads only the required `SILModule.h` path at commit `99659c99d7fe22212afb806e986d7ecc6496f796` into ignored `swift/`.
+
 The first script generates SILGen, canonical/optimized SIL, LLVM IR, assembly, diagnostics, runtime output, and simulator build artifacts under ignored `Evidence/Generated/`. The frozen A/B comparison and negative-control transcript remain under `Evidence/AtomicityAB/` and `Evidence/Diagnostics/`; regenerated copies are not tracked. The second script rebuilds the minimal app for the same iOS 18.0 deployment target using the installed `iPhoneSimulator26.5.sdk`, then runs `simctl install` and `simctl launch` on iPhone 17. Raw generated simulator evidence is written under ignored `Evidence/Generated/SimulatorLaunch/`.
 
 The negative control is checked by the first script with `swiftc -swift-version 6 -typecheck` and is expected to fail with Swift 6 concurrency diagnostics.
