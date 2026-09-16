@@ -13,8 +13,9 @@
 - [x] Clean byte-identical A/B IR and assembly comparison completed at `-Onone` and `-O`.
 - [x] Hidden frontend-flag declaration and ARC selection path traced in the inspected compiler source.
 - [x] Cases A–J are represented in the source matrix; case F is a separate negative control.
-- [x] Runtime/compiler maps identify commit-pinned source URL bases.
+- [x] Runtime/compiler maps use complete commit-pinned source permalinks where source locations are cited.
 - [x] Minimal app bundle installed and launched successfully on the booted iPhone 17 simulator (launch exit 0).
+- [x] Raw install/launch stdout, stderr, and exit statuses are preserved under `Evidence/SimulatorLaunch/` by `run-simulator-validation.sh`.
 - [x] Alternate official toolchain availability checked and absence documented honestly.
 - [x] Official Swift language documentation and relevant evolution proposals are cited in `official-language-sources.md`.
 

@@ -1,6 +1,6 @@
 # Experimental case matrix
 
-All valid cases are compiled in Swift 6 mode by `run-experiment.sh`. Each source is emitted separately so its SIL/IR/assembly remains attributable to that case.
+All valid source files are emitted separately in Swift 6 mode by `run-experiment.sh`. Several cases live together in `Cases.swift`; individual cases there are traced by their function and mangled symbols. No claim is made that each case occupies a separate compilation unit.
 
 | Case | Source | Purpose | Swift 6 result |
 |---|---|---|---|
@@ -14,5 +14,7 @@ All valid cases are compiled in Swift 6 mode by `run-experiment.sh`. Each source
 | H | `Cases.swift:10` | Escaping task capture | Compiles |
 | I | `Cases.swift:11` | Global Sendable reference | Compiles |
 | J | `Cases.swift:12` | Generic `Sendable` ownership | Compiles |
+
+| K | Not applicable | The source-tracing phase did not identify an additional ordinary Swift construct that independently selects nonatomic ARC beyond the explicit `AssumeSingleThreaded` compiler state. | Not applicable |
 
 In the normal toolchain outputs, the observed native runtime symbols are `swift_retain/release`; in the controlled `AssumeSingleThreaded` outputs they are `swift_nonatomic_retain/release`. This is an observation of this compiler/toolchain, not a language guarantee.

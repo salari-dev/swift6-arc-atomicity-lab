@@ -26,7 +26,7 @@ The controlled experiment resolves the missing question: ordinary tested Swift 6
 
 Actor isolation and Sendable did not change the observed calls in the tested cases. This result is local to Apple Swift 6.3.3 and the tested configurations.
 
-The runtime source at commit `99659c99d7fe22212afb806e986d7ecc6496f796` exposes both atomic and non-atomic strong retain/release operations. The source map records the exact declarations and implementation locations.
+Source inspection at Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796` shows both atomic and non-atomic strong retain/release operations. Generated artifacts are from Apple Swift 6.3.3; no claim is made that Apple's binary was built from that source revision.
 
 The valid cases compile. The negative control fails with Swift 6 concurrency diagnostics. SIL contains ownership operations, while emitted LLVM IR/assembly contains calls to `swift_retain` and `swift_release` in this small program. The separate `assume-single-threaded` artifacts contain explicit `swift_nonatomic_*` calls.
 

@@ -1,6 +1,6 @@
 # `-assume-single-threaded`
 
-Inspected Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796`.
+Inspected Swift source commit `99659c99d7fe22212afb806e986d7ecc6496f796`. Generated artifacts are from Apple Swift 6.3.3; this does not establish that Apple's binary was built from this source revision.
 
 | Source | Symbol/state | What it proves | What it does not prove |
 |---|---|---|---|
