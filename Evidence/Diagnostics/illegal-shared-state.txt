@@ -1,0 +1,22 @@
+/Users/msalari/Downloads/swift6-arc-refcount-lab/Sources/ARCRefcountLab/IllegalSharedState.swift:8:5: error: non-Sendable type 'MutableBox' of let 'shared' cannot exit main actor-isolated context
+ 1 | // Intentionally excluded from the executable target; compile separately as the negative control.
+ 2 | final class MutableBox {
+   |             `- note: class 'MutableBox' does not conform to the 'Sendable' protocol
+ 3 |     var value = 0
+ 4 | }
+   :
+ 6 | let shared = MutableBox()
+ 7 | Task.detached {
+ 8 |     shared.value += 1
+   |     `- error: non-Sendable type 'MutableBox' of let 'shared' cannot exit main actor-isolated context
+ 9 | }
+10 | 
+
+/Users/msalari/Downloads/swift6-arc-refcount-lab/Sources/ARCRefcountLab/IllegalSharedState.swift:8:5: error: main actor-isolated let 'shared' cannot be accessed from outside of the actor
+ 6 | let shared = MutableBox()
+ 7 | Task.detached {
+ 8 |     shared.value += 1
+   |     `- error: main actor-isolated let 'shared' cannot be accessed from outside of the actor
+ 9 | }
+10 | 
+negative_control_exit=1

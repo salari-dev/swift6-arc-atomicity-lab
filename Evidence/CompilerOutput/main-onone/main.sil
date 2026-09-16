@@ -1,0 +1,1240 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+import Foundation
+
+final class ImmutableBox : @unchecked Sendable {
+  @_hasStorage final let value: Int { get }
+  init(_ value: Int)
+  @objc deinit
+}
+
+actor Holder {
+  @_hasStorage @_hasInitialValue private final let box: ImmutableBox { get }
+  func read() -> Int
+  @objc deinit
+  init()
+  @available(iOS 13.0, tvOS 13.0, watchOS 6.0, macOS 10.15, *)
+  @_semantics("defaultActor") nonisolated final var unownedExecutor: UnownedSerialExecutor {
+    get
+  }
+}
+
+func caseA() -> Int
+
+func caseB(_ box: ImmutableBox) async -> Int
+
+func caseC() async -> Int
+
+func caseD(_ box: ImmutableBox) async -> Int
+
+@MainActor func caseE(_ box: ImmutableBox) -> Int
+
+func main() async
+
+// main
+// Isolation: unspecified
+sil @main : $@convention(c) (Int32, UnsafeMutablePointer<Optional<UnsafeMutablePointer<Int8>>>) -> Int32 {
+bb0(%0 : $Int32, %1 : $UnsafeMutablePointer<Optional<UnsafeMutablePointer<Int8>>>):
+  // function_ref async_Main
+  %2 = function_ref @async_Main : $@convention(thin) @async () -> () // user: %11
+  %3 = integer_literal $Builtin.Int64, 2048       // user: %4
+  %4 = struct $Int (%3)                           // user: %13
+  %5 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %13
+  %6 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %13
+  %7 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %13
+  %8 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %13
+  %9 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %13
+  // function_ref thunk for @escaping @convention(thin) @async () -> ()
+  %10 = function_ref @$sIetH_yts5Error_pIegHrzo_TR : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) // user: %11
+  %11 = partial_apply [callee_guaranteed] %10(%2) : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) // user: %12
+  %12 = convert_function %11 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <()> // user: %13
+  %13 = builtin "createAsyncTask"<()>(%4, %5, %6, %7, %8, %9, %12) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %14
+  %14 = tuple_extract %13, 0                      // user: %16
+  // function_ref swift_job_run
+  %15 = function_ref @swift_job_run : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> () // user: %20
+  %16 = builtin "convertTaskToJob"(%14) : $Builtin.Job // user: %17
+  %17 = struct $UnownedJob (%16)                  // user: %20
+  %18 = builtin "buildMainActorExecutorRef"() : $Builtin.Executor // user: %19
+  %19 = struct $UnownedSerialExecutor (%18)       // user: %20
+  %20 = apply %15(%17, %19) : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> ()
+  // function_ref swift_task_asyncMainDrainQueue
+  %21 = function_ref @swift_task_asyncMainDrainQueue : $@convention(thin) () -> Never // user: %22
+  %22 = apply %21() : $@convention(thin) () -> Never
+  unreachable                                     // id: %23
+} // end sil function 'main'
+
+// async_Main
+// Isolation: unspecified
+sil private @async_Main : $@convention(thin) @async () -> () {
+bb0:
+  %0 = metatype $@thick MainActor.Type            // user: %2
+  // function_ref static MainActor.shared.getter
+  %1 = function_ref @$sScM6sharedScMvgZ : $@convention(method) (@thick MainActor.Type) -> @owned MainActor // user: %2
+  %2 = apply %1(%0) : $@convention(method) (@thick MainActor.Type) -> @owned MainActor // user: %3
+  %3 = init_existential_ref %2 : $MainActor : $MainActor, $any Actor // user: %4
+  %4 = enum $Optional<any Actor>, #Optional.some!enumelt, %3 // users: %8, %7
+  // function_ref main()
+  %5 = function_ref @$s4mainAAyyYaF : $@convention(thin) @async () -> () // user: %6
+  %6 = apply %5() : $@convention(thin) @async () -> ()
+  hop_to_executor %4                              // id: %7
+  release_value %4                                // id: %8
+  %9 = integer_literal $Builtin.Int32, 0          // user: %10
+  %10 = struct $Int32 (%9)                        // user: %12
+  // function_ref @objc exit(_:)
+  %11 = function_ref @$sSo4exitys5NeverOs5Int32VFTo : $@convention(c) (Int32) -> Never // user: %12
+  %12 = apply %11(%10) : $@convention(c) (Int32) -> Never
+  unreachable                                     // id: %13
+} // end sil function 'async_Main'
+
+// thunk for @escaping @convention(thin) @async () -> ()
+sil shared [transparent] [reabstraction_thunk] @$sIetH_yts5Error_pIegHrzo_TR : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) {
+// %1                                             // user: %2
+bb0(%0 : $*(), %1 : $@convention(thin) @async () -> ()):
+  %2 = apply %1() : $@convention(thin) @async () -> ()
+  %3 = tuple ()                                   // user: %4
+  return %3                                       // id: %4
+} // end sil function '$sIetH_yts5Error_pIegHrzo_TR'
+
+// swift_job_run
+// Isolation: unspecified
+sil [available 12.0.0] @swift_job_run : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> ()
+
+// swift_task_asyncMainDrainQueue
+// Isolation: unspecified
+sil [available 12.0.0] @swift_task_asyncMainDrainQueue : $@convention(thin) () -> Never
+
+// static MainActor.shared.getter
+// Isolation: unspecified
+sil [available 12.0.0] @$sScM6sharedScMvgZ : $@convention(method) (@thick MainActor.Type) -> @owned MainActor
+
+// main()
+// Isolation: unspecified
+sil hidden @$s4mainAAyyYaF : $@convention(thin) @async () -> () {
+bb0:
+  %0 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %107, %80, %59, %1
+  hop_to_executor %0                              // id: %1
+  %2 = integer_literal $Builtin.Word, 1           // user: %4
+  // function_ref _allocateUninitializedArray<A>(_:)
+  %3 = function_ref @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %4
+  %4 = apply %3<Any>(%2) : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %5
+  %5 = tuple_extract %4, 0                        // users: %6, %136
+  %6 = struct_extract %5, #Array._buffer          // user: %7
+  %7 = struct_extract %6, #_ArrayBuffer._storage  // user: %8
+  %8 = struct_extract %7, #_BridgeStorage.rawValue // user: %9
+  %9 = unchecked_ref_cast %8 to $__ContiguousArrayStorageBase // user: %10
+  %10 = ref_tail_addr %9, $Any                    // user: %133
+  %11 = alloc_stack [var_decl] $DefaultStringInterpolation // users: %126, %19, %26, %35, %46, %62, %73, %83, %94, %110, %121, %129, %128
+  %12 = integer_literal $Builtin.Int64, 11        // user: %13
+  %13 = struct $Int (%12)                         // user: %18
+  %14 = integer_literal $Builtin.Int64, 4         // user: %15
+  %15 = struct $Int (%14)                         // user: %18
+  %16 = metatype $@thin DefaultStringInterpolation.Type // user: %18
+  // function_ref DefaultStringInterpolation.init(literalCapacity:interpolationCount:)
+  %17 = function_ref @$ss26DefaultStringInterpolationV15literalCapacity18interpolationCountABSi_SitcfC : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation // user: %18
+  %18 = apply %17(%13, %15, %16) : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation // user: %19
+  store %18 to %11                                // id: %19
+  %20 = string_literal utf8 "A="                  // user: %25
+  %21 = integer_literal $Builtin.Word, 2          // user: %25
+  %22 = integer_literal $Builtin.Int1, -1         // user: %25
+  %23 = metatype $@thin String.Type               // user: %25
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %24 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %25
+  %25 = apply %24(%20, %21, %22, %23) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %30, %28
+  %26 = begin_access [modify] [static] %11        // users: %29, %28
+  // function_ref DefaultStringInterpolation.appendLiteral(_:)
+  %27 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %28
+  %28 = apply %27(%25, %26) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+  end_access %26                                  // id: %29
+  release_value %25                               // id: %30
+  // function_ref caseA()
+  %31 = function_ref @$s4main5caseASiyF : $@convention(thin) () -> Int // user: %32
+  %32 = apply %31() : $@convention(thin) () -> Int // user: %34
+  %33 = alloc_stack $Int                          // users: %34, %39, %37
+  store %32 to %33                                // id: %34
+  %35 = begin_access [modify] [static] %11        // users: %38, %37
+  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
+  %36 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %37
+  %37 = apply %36<Int>(%33, %35) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
+  end_access %35                                  // id: %38
+  dealloc_stack %33                               // id: %39
+  %40 = string_literal utf8 " B="                 // user: %45
+  %41 = integer_literal $Builtin.Word, 3          // user: %45
+  %42 = integer_literal $Builtin.Int1, -1         // user: %45
+  %43 = metatype $@thin String.Type               // user: %45
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %44 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %45
+  %45 = apply %44(%40, %41, %42, %43) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %50, %48
+  %46 = begin_access [modify] [static] %11        // users: %49, %48
+  // function_ref DefaultStringInterpolation.appendLiteral(_:)
+  %47 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %48
+  %48 = apply %47(%45, %46) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+  end_access %46                                  // id: %49
+  release_value %45                               // id: %50
+  %51 = metatype $@thick ImmutableBox.Type        // user: %55
+  %52 = integer_literal $Builtin.Int64, 2         // user: %53
+  %53 = struct $Int (%52)                         // user: %55
+  // function_ref ImmutableBox.__allocating_init(_:)
+  %54 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %55
+  %55 = apply %54(%53, %51) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %58, %57
+  // function_ref caseB(_:)
+  %56 = function_ref @$s4main5caseBySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %57
+  %57 = apply %56(%55) : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %61
+  strong_release %55                              // id: %58
+  hop_to_executor %0                              // id: %59
+  %60 = alloc_stack $Int                          // users: %61, %66, %64
+  store %57 to %60                                // id: %61
+  %62 = begin_access [modify] [static] %11        // users: %65, %64
+  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
+  %63 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %64
+  %64 = apply %63<Int>(%60, %62) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
+  end_access %62                                  // id: %65
+  dealloc_stack %60                               // id: %66
+  %67 = string_literal utf8 " C="                 // user: %72
+  %68 = integer_literal $Builtin.Word, 3          // user: %72
+  %69 = integer_literal $Builtin.Int1, -1         // user: %72
+  %70 = metatype $@thin String.Type               // user: %72
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %71 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %72
+  %72 = apply %71(%67, %68, %69, %70) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %77, %75
+  %73 = begin_access [modify] [static] %11        // users: %76, %75
+  // function_ref DefaultStringInterpolation.appendLiteral(_:)
+  %74 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %75
+  %75 = apply %74(%72, %73) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+  end_access %73                                  // id: %76
+  release_value %72                               // id: %77
+  // function_ref caseC()
+  %78 = function_ref @$s4main5caseCSiyYaF : $@convention(thin) @async () -> Int // user: %79
+  %79 = apply %78() : $@convention(thin) @async () -> Int // user: %82
+  hop_to_executor %0                              // id: %80
+  %81 = alloc_stack $Int                          // users: %82, %87, %85
+  store %79 to %81                                // id: %82
+  %83 = begin_access [modify] [static] %11        // users: %86, %85
+  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
+  %84 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %85
+  %85 = apply %84<Int>(%81, %83) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
+  end_access %83                                  // id: %86
+  dealloc_stack %81                               // id: %87
+  %88 = string_literal utf8 " D="                 // user: %93
+  %89 = integer_literal $Builtin.Word, 3          // user: %93
+  %90 = integer_literal $Builtin.Int1, -1         // user: %93
+  %91 = metatype $@thin String.Type               // user: %93
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %92 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %93
+  %93 = apply %92(%88, %89, %90, %91) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %98, %96
+  %94 = begin_access [modify] [static] %11        // users: %97, %96
+  // function_ref DefaultStringInterpolation.appendLiteral(_:)
+  %95 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %96
+  %96 = apply %95(%93, %94) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+  end_access %94                                  // id: %97
+  release_value %93                               // id: %98
+  %99 = metatype $@thick ImmutableBox.Type        // user: %103
+  %100 = integer_literal $Builtin.Int64, 4        // user: %101
+  %101 = struct $Int (%100)                       // user: %103
+  // function_ref ImmutableBox.__allocating_init(_:)
+  %102 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %103
+  %103 = apply %102(%101, %99) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %106, %105
+  // function_ref caseD(_:)
+  %104 = function_ref @$s4main5caseDySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %105
+  %105 = apply %104(%103) : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %109
+  strong_release %103                             // id: %106
+  hop_to_executor %0                              // id: %107
+  %108 = alloc_stack $Int                         // users: %109, %114, %112
+  store %105 to %108                              // id: %109
+  %110 = begin_access [modify] [static] %11       // users: %113, %112
+  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
+  %111 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %112
+  %112 = apply %111<Int>(%108, %110) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
+  end_access %110                                 // id: %113
+  dealloc_stack %108                              // id: %114
+  %115 = string_literal utf8 ""                   // user: %120
+  %116 = integer_literal $Builtin.Word, 0         // user: %120
+  %117 = integer_literal $Builtin.Int1, -1        // user: %120
+  %118 = metatype $@thin String.Type              // user: %120
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %119 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %120
+  %120 = apply %119(%115, %116, %117, %118) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %125, %123
+  %121 = begin_access [modify] [static] %11       // users: %124, %123
+  // function_ref DefaultStringInterpolation.appendLiteral(_:)
+  %122 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %123
+  %123 = apply %122(%120, %121) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+  end_access %121                                 // id: %124
+  release_value %120                              // id: %125
+  %126 = load %11                                 // users: %132, %127
+  retain_value %126                               // id: %127
+  destroy_addr %11                                // id: %128
+  dealloc_stack %11                               // id: %129
+  %130 = metatype $@thin String.Type              // user: %132
+  // function_ref String.init(stringInterpolation:)
+  %131 = function_ref @$sSS19stringInterpolationSSs013DefaultStringB0V_tcfC : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String // user: %132
+  %132 = apply %131(%126, %130) : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String // user: %134
+  %133 = init_existential_addr %10, $String       // user: %134
+  store %132 to %133                              // id: %134
+  // function_ref _finalizeUninitializedArray<A>(_:)
+  %135 = function_ref @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // user: %136
+  %136 = apply %135<Any>(%5) : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // users: %145, %142
+  // function_ref default argument 1 of print(_:separator:terminator:)
+  %137 = function_ref @$ss5print_9separator10terminatoryypd_S2StFfA0_ : $@convention(thin) () -> @owned String // user: %138
+  %138 = apply %137() : $@convention(thin) () -> @owned String // users: %144, %142
+  // function_ref default argument 2 of print(_:separator:terminator:)
+  %139 = function_ref @$ss5print_9separator10terminatoryypd_S2StFfA1_ : $@convention(thin) () -> @owned String // user: %140
+  %140 = apply %139() : $@convention(thin) () -> @owned String // users: %143, %142
+  // function_ref print(_:separator:terminator:)
+  %141 = function_ref @$ss5print_9separator10terminatoryypd_S2StF : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> () // user: %142
+  %142 = apply %141(%136, %138, %140) : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> ()
+  release_value %140                              // id: %143
+  release_value %138                              // id: %144
+  release_value %136                              // id: %145
+  %146 = tuple ()                                 // user: %147
+  return %146                                     // id: %147
+} // end sil function '$s4mainAAyyYaF'
+
+// @objc exit(_:)
+// Isolation: unspecified
+// clang name: exit
+sil [asmname "exit"] [clang exit] @$sSo4exitys5NeverOs5Int32VFTo : $@convention(c) (Int32) -> Never
+
+// ImmutableBox.value.getter
+// Isolation: unspecified
+sil hidden [transparent] @$s4main12ImmutableBoxC5valueSivg : $@convention(method) (@guaranteed ImmutableBox) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #ImmutableBox.value // user: %3
+  %3 = load %2                                    // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s4main12ImmutableBoxC5valueSivg'
+
+// ImmutableBox.__allocating_init(_:)
+// Isolation: unspecified
+sil hidden [exact_self_class] @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox {
+// %0 "value"                                     // user: %4
+// %1 "$metatype"
+bb0(%0 : $Int, %1 : $@thick ImmutableBox.Type):
+  %2 = alloc_ref $ImmutableBox                    // user: %4
+  // function_ref ImmutableBox.init(_:)
+  %3 = function_ref @$s4main12ImmutableBoxCyACSicfc : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox // user: %4
+  %4 = apply %3(%0, %2) : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox // user: %5
+  return %4                                       // id: %5
+} // end sil function '$s4main12ImmutableBoxCyACSicfC'
+
+// ImmutableBox.init(_:)
+// Isolation: unspecified
+sil hidden @$s4main12ImmutableBoxCyACSicfc : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox {
+// %0 "value"                                     // users: %5, %2
+// %1 "self"                                      // users: %4, %6, %3
+bb0(%0 : $Int, %1 : $ImmutableBox):
+  debug_value %0, let, name "value", argno 1      // id: %2
+  debug_value %1, let, name "self", argno 2       // id: %3
+  %4 = ref_element_addr %1, #ImmutableBox.value   // user: %5
+  store %0 to %4                                  // id: %5
+  %6 = end_init_let_ref %1                        // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s4main12ImmutableBoxCyACSicfc'
+
+// ImmutableBox.deinit
+// Isolation: unspecified
+sil hidden @$s4main12ImmutableBoxCfd : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %3
+  return %2                                       // id: %3
+} // end sil function '$s4main12ImmutableBoxCfd'
+
+// ImmutableBox.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s4main12ImmutableBoxCfD : $@convention(method) (@owned ImmutableBox) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref ImmutableBox.deinit
+  %2 = function_ref @$s4main12ImmutableBoxCfd : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $ImmutableBox     // user: %5
+  dealloc_ref %4                                  // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s4main12ImmutableBoxCfD'
+
+// variable initialization expression of Holder.box
+// Isolation: unspecified
+sil hidden [transparent] @$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvpfi : $@convention(thin) () -> @owned ImmutableBox {
+bb0:
+  %0 = metatype $@thick ImmutableBox.Type         // user: %4
+  %1 = integer_literal $Builtin.Int64, 17         // user: %2
+  %2 = struct $Int (%1)                           // user: %4
+  // function_ref ImmutableBox.__allocating_init(_:)
+  %3 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %4
+  %4 = apply %3(%2, %0) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %5
+  return %4                                       // id: %5
+} // end sil function '$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvpfi'
+
+// Int.init(_builtinIntegerLiteral:)
+// Isolation: unspecified
+sil public_external [transparent] @$sSi22_builtinIntegerLiteralSiBI_tcfC : $@convention(method) (Builtin.IntLiteral, @thin Int.Type) -> Int {
+// %0                                             // user: %2
+bb0(%0 : $Builtin.IntLiteral, %1 : $@thin Int.Type):
+  %2 = builtin "s_to_s_checked_trunc_IntLiteral_Int64"(%0) : $(Builtin.Int64, Builtin.Int1) // user: %3
+  %3 = tuple_extract %2, 0                        // user: %4
+  %4 = struct $Int (%3)                           // user: %5
+  return %4                                       // id: %5
+} // end sil function '$sSi22_builtinIntegerLiteralSiBI_tcfC'
+
+// Holder.box.getter
+// Isolation: actor_instance. name: 'self'
+sil private [transparent] @$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvg : $@convention(method) (@sil_isolated @guaranteed Holder) -> @owned ImmutableBox {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #Holder.box // user: %3
+  %3 = load %2                                    // users: %5, %4
+  strong_retain %3                                // id: %4
+  return %3                                       // id: %5
+} // end sil function '$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvg'
+
+// Holder.read()
+// Isolation: actor_instance. name: 'self'
+sil hidden @$s4main6HolderC4readSiyF : $@convention(method) (@sil_isolated @guaranteed Holder) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #Holder.box // user: %3
+  %3 = load %2                                    // users: %7, %5, %4
+  strong_retain %3                                // id: %4
+  %5 = ref_element_addr [immutable] %3, #ImmutableBox.value // user: %6
+  %6 = load %5                                    // user: %8
+  strong_release %3                               // id: %7
+  return %6                                       // id: %8
+} // end sil function '$s4main6HolderC4readSiyF'
+
+// Holder.deinit
+// Isolation: unspecified
+sil hidden @$s4main6HolderCfd : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %7, %6, %2, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr %0, #Holder.box           // user: %3
+  %3 = begin_access [deinit] [static] %2          // users: %5, %4
+  destroy_addr %3                                 // id: %4
+  end_access %3                                   // id: %5
+  %6 = builtin "destroyDefaultActor"(%0) : $()
+  %7 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %8
+  return %7                                       // id: %8
+} // end sil function '$s4main6HolderCfd'
+
+// Holder.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s4main6HolderCfD : $@convention(method) (@owned Holder) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref Holder.deinit
+  %2 = function_ref @$s4main6HolderCfd : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $Holder           // user: %5
+  dealloc_ref %4                                  // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s4main6HolderCfD'
+
+// Holder.__allocating_init()
+// Isolation: nonisolated
+sil hidden [exact_self_class] @$s4main6HolderCACycfC : $@convention(method) (@thick Holder.Type) -> @owned Holder {
+// %0 "$metatype"
+bb0(%0 : $@thick Holder.Type):
+  %1 = alloc_ref $Holder                          // user: %3
+  // function_ref Holder.init()
+  %2 = function_ref @$s4main6HolderCACycfc : $@convention(method) (@owned Holder) -> @owned Holder // user: %3
+  %3 = apply %2(%1) : $@convention(method) (@owned Holder) -> @owned Holder // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s4main6HolderCACycfC'
+
+// Holder.init()
+// Isolation: nonisolated
+sil hidden @$s4main6HolderCACycfc : $@convention(method) (@owned Holder) -> @owned Holder {
+// %0 "self"                                      // users: %3, %10, %2, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = builtin "initializeDefaultActor"(%0) : $()
+  %3 = ref_element_addr %0, #Holder.box           // user: %9
+  %4 = metatype $@thick ImmutableBox.Type         // user: %8
+  %5 = integer_literal $Builtin.Int64, 17         // user: %6
+  %6 = struct $Int (%5)                           // user: %8
+  // function_ref ImmutableBox.__allocating_init(_:)
+  %7 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %8
+  %8 = apply %7(%6, %4) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %9
+  store %8 to %3                                  // id: %9
+  %10 = end_init_let_ref %0                       // user: %11
+  return %10                                      // id: %11
+} // end sil function '$s4main6HolderCACycfc'
+
+// Holder.unownedExecutor.getter
+// Isolation: nonisolated
+sil hidden [available 10.15] [_semantics "defaultActor"] @$s4main6HolderC15unownedExecutorScevg : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $Holder):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = metatype $@thin UnownedSerialExecutor.Type // user: %5
+  %3 = builtin "buildDefaultActorExecutorRef"<Holder>(%0) : $Builtin.Executor // user: %5
+  // function_ref UnownedSerialExecutor.init(_:)
+  %4 = function_ref @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %5
+  %5 = apply %4(%3, %2) : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %6
+  return %5                                       // id: %6
+} // end sil function '$s4main6HolderC15unownedExecutorScevg'
+
+// UnownedSerialExecutor.init(_:)
+// Isolation: unspecified
+sil [available 12.0.0] @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor
+
+// protocol witness for Actor.unownedExecutor.getter in conformance Holder
+// Isolation: nonisolated
+sil private [transparent] [thunk] @$s4main6HolderCScAAAScA15unownedExecutorScevgTW : $@convention(witness_method: Actor) (@guaranteed Holder) -> UnownedSerialExecutor {
+// %0                                             // user: %2
+bb0(%0 : $Holder):
+  // function_ref Holder.unownedExecutor.getter
+  %1 = function_ref @$s4main6HolderC15unownedExecutorScevg : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor // user: %2
+  %2 = apply %1(%0) : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor // user: %3
+  return %2                                       // id: %3
+} // end sil function '$s4main6HolderCScAAAScA15unownedExecutorScevgTW'
+
+// caseA()
+// Isolation: unspecified
+sil hidden @$s4main5caseASiyF : $@convention(thin) () -> Int {
+bb0:
+  %0 = metatype $@thick ImmutableBox.Type         // user: %4
+  %1 = integer_literal $Builtin.Int64, 1          // user: %2
+  %2 = struct $Int (%1)                           // user: %4
+  // function_ref ImmutableBox.__allocating_init(_:)
+  %3 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %4
+  %4 = apply %3(%2, %0) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %8, %6, %5
+  debug_value %4, let, name "box"                 // id: %5
+  %6 = ref_element_addr [immutable] %4, #ImmutableBox.value // user: %7
+  %7 = load %6                                    // user: %9
+  strong_release %4                               // id: %8
+  return %7                                       // id: %9
+} // end sil function '$s4main5caseASiyF'
+
+// caseB(_:)
+// Isolation: unspecified
+sil hidden @$s4main5caseBySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int {
+// %0 "box"                                       // users: %11, %9, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "box", argno 1        // id: %1
+  %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %20, %3
+  hop_to_executor %2                              // id: %3
+  %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
+  %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
+  %6 = alloc_stack $Optional<TaskPriority>        // users: %15, %14, %13, %7
+  inject_enum_addr %6, #Optional.none!enumelt     // id: %7
+  // function_ref closure #1 in caseB(_:)
+  %8 = function_ref @$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %11
+  strong_retain %0                                // id: %9
+  %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %13
+  // function_ref static Task<>.detached(name:priority:operation:)
+  %12 = function_ref @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZ : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
+  %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %19, %18
+  destroy_addr %6                                 // id: %14
+  dealloc_stack %6                                // id: %15
+  %16 = alloc_stack $Int                          // users: %21, %22, %18
+  // function_ref Task<>.value.getter
+  %17 = function_ref @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0 // user: %18
+  %18 = apply %17<Int, Never>(%16, %13) : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
+  release_value %13                               // id: %19
+  hop_to_executor %2                              // id: %20
+  %21 = load %16                                  // user: %23
+  dealloc_stack %16                               // id: %22
+  return %21                                      // id: %23
+} // end sil function '$s4main5caseBySiAA12ImmutableBoxCYaF'
+
+// closure #1 in caseB(_:)
+// Isolation: nonisolated
+sil private @$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> {
+// %0 "$return_value"                             // user: %8
+// %2 "box"                                       // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $ImmutableBox):
+  debug_value %2, let, name "box", argno 1        // id: %3
+  %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
+  hop_to_executor %4                              // id: %5
+  %6 = ref_element_addr [immutable] %2, #ImmutableBox.value // user: %7
+  %7 = load %6                                    // user: %8
+  store %7 to %0                                  // id: %8
+  %9 = tuple ()                                   // user: %10
+  return %9                                       // id: %10
+} // end sil function '$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_'
+
+// static Task<>.detached(name:priority:operation:)
+// Isolation: unspecified
+sil shared [available 12.0.0] @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZ : $@convention(method) <Success, Failure where Success : Sendable, Failure == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>, @thin Task<Success, Never>.Type) -> @owned Task<Success, Never> {
+[%0: read v**.c*.v**, write v**.c*.v**, copy v**.c*.v**, destroy v**.c*.v**]
+[%1: read v**, copy v**]
+[%2: read v**.c*.v**, write v**.c*.v**, copy v**.**, destroy v**.c*.v**]
+[global: read,write,copy,destroy,allocate,deinit_barrier]
+// %0                                             // user: %41
+// %1                                             // user: %8
+// %2                                             // users: %27, %25, %6, %5
+// %3                                             // user: %119
+bb0(%0 : $Optional<String>, %1 : $*Optional<TaskPriority>, %2 : $@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>, %3 : $@thin Task<Success, Never>.Type):
+  %4 = alloc_stack [var_decl] $@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success> // users: %84, %6, %121, %120, %65
+  strong_retain %2                                // id: %5
+  store %2 to %4                                  // id: %6
+  %7 = alloc_stack $Optional<TaskPriority>        // users: %21, %13, %10, %9, %8
+  copy_addr %1 to [init] %7                       // id: %8
+  switch_enum_addr %7, case #Optional.some!enumelt: bb2, case #Optional.none!enumelt: bb1 // id: %9
+
+bb1:                                              // Preds: bb0
+  destroy_addr %7                                 // id: %10
+  %11 = integer_literal $Builtin.Int64, 0         // user: %12
+  br bb3(%11)                                     // id: %12
+
+bb2:                                              // Preds: bb0
+  %13 = unchecked_take_enum_data_addr %7, #Optional.some!enumelt // users: %16, %15
+  // function_ref TaskPriority.rawValue.getter
+  %14 = function_ref @$sScP8rawValues5UInt8Vvg : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8 // user: %15
+  %15 = apply %14(%13) : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8 // user: %17
+  destroy_addr %13                                // id: %16
+  %17 = struct_extract %15, #UInt8._value         // user: %18
+  %18 = builtin "zextOrBitCast_Int8_Int64"(%17) : $Builtin.Int64 // user: %19
+  br bb3(%18)                                     // id: %19
+
+// %20                                            // user: %23
+bb3(%20 : $Builtin.Int64):                        // Preds: bb2 bb1
+  dealloc_stack %7                                // id: %21
+  %22 = integer_literal $Builtin.Int64, 4096      // user: %23
+  %23 = builtin "or_Int64"(%20, %22) : $Builtin.Int64 // user: %24
+  %24 = struct $Int (%23)                         // users: %90, %65
+  %25 = function_extract_isolation %2             // users: %28, %26
+  retain_value %25                                // id: %26
+  strong_release %2                               // id: %27
+  switch_enum %25, case #Optional.some!enumelt: bb5, case #Optional.none!enumelt: bb4 // id: %28
+
+bb4:                                              // Preds: bb3
+  %29 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %30
+  br bb6(%29)                                     // id: %30
+
+// %31                                            // user: %32
+bb5(%31 : $any Actor):                            // Preds: bb3
+  %32 = open_existential_ref %31 to $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  strong_release %32                              // id: %35
+  %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
+  %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38
+  br bb6(%37)                                     // id: %38
+
+// %39                                            // users: %90, %65
+bb6(%39 : $Optional<Builtin.Executor>):           // Preds: bb5 bb4
+  %40 = enum $Optional<Builtin.NativeObject>, #Optional.none!enumelt // user: %42
+  switch_enum %0, case #Optional.some!enumelt: bb8, case #Optional.none!enumelt: bb7 // id: %41
+
+bb7:                                              // Preds: bb6
+  br bb11(%40)                                    // id: %42
+
+// %43                                            // user: %45
+bb8(%43 : $String):                               // Preds: bb6
+  // function_ref String.utf8CString.getter
+  %44 = function_ref @$sSS11utf8CStrings15ContiguousArrayVys4Int8VGvg : $@convention(method) (@guaranteed String) -> @owned ContiguousArray<Int8> // user: %45
+  %45 = apply %44(%43) : $@convention(method) (@guaranteed String) -> @owned ContiguousArray<Int8> // users: %75, %47
+  // function_ref closure #1 in static Task<>.detached(name:priority:operation:)
+  %46 = function_ref @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZBoSRys4Int8VGXEfU_ : $@convention(thin) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>) -> (@out Builtin.NativeObject, @error_indirect Never) // user: %65
+  %47 = struct_extract %45, #ContiguousArray._buffer // users: %72, %67, %54, %49
+  %48 = alloc_stack $Builtin.NativeObject         // users: %73, %74, %68, %65
+  %49 = struct_extract %47, #_ContiguousArrayBuffer._storage // user: %50
+  %50 = ref_tail_addr %49, $Int8                  // user: %51
+  %51 = address_to_pointer %50 to $Builtin.RawPointer // user: %52
+  %52 = struct $UnsafePointer<Int8> (%51)         // user: %53
+  %53 = enum $Optional<UnsafePointer<Int8>>, #Optional.some!enumelt, %52 // user: %63
+  %54 = struct_extract %47, #_ContiguousArrayBuffer._storage // user: %55
+  %55 = ref_element_addr %54, #__ContiguousArrayStorageBase.countAndCapacity // user: %56
+  %56 = struct_element_addr %55, #_ArrayBody._storage // user: %57
+  %57 = struct_element_addr %56, #_SwiftArrayBodyStorage.count // user: %58
+  %58 = struct_element_addr %57, #Int._value      // user: %59
+  %59 = load %58                                  // user: %60
+  %60 = builtin "assumeNonNegative_Int64"(%59) : $Builtin.Int64 // user: %61
+  %61 = builtin "assumeNonNegative_Int64"(%60) : $Builtin.Int64 // user: %62
+  %62 = struct $Int (%61)                         // user: %63
+  %63 = struct $UnsafeBufferPointer<Int8> (%53, %62) // user: %65
+  %64 = alloc_stack $Never                        // users: %71, %66, %65
+  try_apply %46<Success, Never>(%48, %64, %63, %24, %39, %4) : $@convention(thin) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>) -> (@out Builtin.NativeObject, @error_indirect Never), normal bb10, error bb9 // id: %65
+
+bb9:                                              // Preds: bb8
+  dealloc_stack %64                               // id: %66
+  fix_lifetime %47                                // id: %67
+  dealloc_stack %48                               // id: %68
+  unreachable                                     // id: %69
+
+bb10(%70 : $()):                                  // Preds: bb8
+  dealloc_stack %64                               // id: %71
+  fix_lifetime %47                                // id: %72
+  %73 = load %48                                  // user: %76
+  dealloc_stack %48                               // id: %74
+  release_value %45                               // id: %75
+  %76 = enum $Optional<Builtin.NativeObject>, #Optional.some!enumelt, %73 // user: %77
+  br bb11(%76)                                    // id: %77
+
+// %78                                            // users: %80, %79, %94
+bb11(%78 : $Optional<Builtin.NativeObject>):      // Preds: bb10 bb7
+  switch_enum %78, case #Optional.some!enumelt: bb13, case #Optional.none!enumelt: bb12 // id: %79
+
+bb12:                                             // Preds: bb11
+  release_value %78                               // id: %80
+  %81 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // users: %90, %90
+  %82 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %90
+  %83 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %90
+  %84 = load %4                                   // users: %86, %85
+  strong_retain %84                               // id: %85
+  %86 = convert_function %84 to $@isolated(any) @async @callee_guaranteed () -> @out Success // user: %88
+  // function_ref thunk for @escaping @isolated(any) @callee_guaranteed @async () -> (@out A)
+  %87 = function_ref @$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %88
+  %88 = partial_apply [callee_guaranteed] %87<Success, Never>(%86) : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %89
+  %89 = convert_function %88 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <Success> // user: %90
+  %90 = builtin "createAsyncTask"<Success>(%24, %39, %81, %82, %83, %81, %89) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %91
+  %91 = tuple_extract %90, 0                      // user: %92
+  br bb16(%91)                                    // id: %92
+
+bb13(%93 : $Builtin.NativeObject):                // Preds: bb11
+  switch_enum %78, case #Optional.some!enumelt: bb15, case #Optional.none!enumelt: bb14 // id: %94
+
+bb14:                                             // Preds: bb13
+  %95 = string_literal utf8 "_Concurrency/arm64e-apple-macos.swiftinterface" // user: %102
+  %96 = integer_literal $Builtin.Word, 46         // user: %103
+  %97 = string_literal utf8 "Unexpectedly found nil while unwrapping an Optional value" // user: %99
+  %98 = integer_literal $Builtin.Word, 57         // user: %101
+  %99 = builtin "ptrtoint_Word"(%97) : $Builtin.Word // user: %101
+  %100 = integer_literal $Builtin.Int8, 2         // users: %109, %103, %101
+  %101 = struct $StaticString (%99, %98, %100)    // user: %113
+  %102 = builtin "ptrtoint_Word"(%95) : $Builtin.Word // user: %103
+  %103 = struct $StaticString (%102, %96, %100)   // user: %113
+  %104 = integer_literal $Builtin.Int64, 3410     // user: %105
+  %105 = struct $UInt (%104)                      // user: %113
+  %106 = string_literal utf8 "Fatal error"        // user: %108
+  %107 = integer_literal $Builtin.Word, 11        // user: %109
+  %108 = builtin "ptrtoint_Word"(%106) : $Builtin.Word // user: %109
+  %109 = struct $StaticString (%108, %107, %100)  // user: %113
+  %110 = integer_literal $Builtin.Int32, 1        // user: %111
+  %111 = struct $UInt32 (%110)                    // user: %113
+  // function_ref _assertionFailure(_:_:file:line:flags:)
+  %112 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %113
+  %113 = apply %112(%109, %101, %103, %105, %111) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %114
+
+// %115                                           // user: %116
+bb15(%115 : $Builtin.NativeObject):               // Preds: bb13
+  br bb16(%115)                                   // id: %116
+
+// %117                                           // user: %119
+bb16(%117 : $Builtin.NativeObject):               // Preds: bb15 bb12
+  // function_ref Task.init(_:)
+  %118 = function_ref @$sScTyScTyxq_GBocfC : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 : Error> (@owned Builtin.NativeObject, @thin Task<τ_0_0, τ_0_1>.Type) -> @owned Task<τ_0_0, τ_0_1> // user: %119
+  %119 = apply %118<Success, Never>(%117, %3) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 : Error> (@owned Builtin.NativeObject, @thin Task<τ_0_0, τ_0_1>.Type) -> @owned Task<τ_0_0, τ_0_1> // user: %122
+  destroy_addr %4                                 // id: %120
+  dealloc_stack %4                                // id: %121
+  return %119                                     // id: %122
+} // end sil function '$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZ'
+
+// Task<>.value.getter
+// Isolation: unspecified
+sil [available 12.0.0] @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
+
+// caseC()
+// Isolation: unspecified
+sil hidden @$s4main5caseCSiyYaF : $@convention(thin) @async () -> Int {
+bb0:
+  %0 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %1
+  hop_to_executor %0                              // id: %1
+  %2 = metatype $@thick Holder.Type               // user: %4
+  // function_ref Holder.__allocating_init()
+  %3 = function_ref @$s4main6HolderCACycfC : $@convention(method) (@thick Holder.Type) -> @owned Holder // user: %4
+  %4 = apply %3(%2) : $@convention(method) (@thick Holder.Type) -> @owned Holder // users: %8, %6, %7, %5
+  %5 = class_method %4, #Holder.read : (isolated Holder) -> () -> Int, $@convention(method) (@sil_isolated @guaranteed Holder) -> Int // user: %7
+  hop_to_executor %4                              // id: %6
+  %7 = apply %5(%4) : $@convention(method) (@sil_isolated @guaranteed Holder) -> Int // user: %9
+  strong_release %4                               // id: %8
+  return %7                                       // id: %9
+} // end sil function '$s4main5caseCSiyYaF'
+
+// caseD(_:)
+// Isolation: unspecified
+sil hidden @$s4main5caseDySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int {
+// %0 "box"                                       // users: %11, %9, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "box", argno 1        // id: %1
+  %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %19, %3
+  hop_to_executor %2                              // id: %3
+  %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
+  %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
+  %6 = alloc_stack $Optional<TaskPriority>        // users: %14, %13, %7
+  inject_enum_addr %6, #Optional.none!enumelt     // id: %7
+  // function_ref closure #1 in caseD(_:)
+  %8 = function_ref @$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %11
+  strong_retain %0                                // id: %9
+  %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %13
+  // function_ref Task<>.init(name:priority:operation:)
+  %12 = function_ref @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
+  %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %18, %17
+  dealloc_stack %6                                // id: %14
+  %15 = alloc_stack $Int                          // users: %20, %21, %17
+  // function_ref Task<>.value.getter
+  %16 = function_ref @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0 // user: %17
+  %17 = apply %16<Int, Never>(%15, %13) : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
+  release_value %13                               // id: %18
+  hop_to_executor %2                              // id: %19
+  %20 = load %15                                  // user: %22
+  dealloc_stack %15                               // id: %21
+  return %20                                      // id: %22
+} // end sil function '$s4main5caseDySiAA12ImmutableBoxCYaF'
+
+// closure #1 in caseD(_:)
+// Isolation: nonisolated
+sil private @$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> {
+// %0 "$return_value"                             // user: %8
+// %2 "box"                                       // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $ImmutableBox):
+  debug_value %2, let, name "box", argno 1        // id: %3
+  %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
+  hop_to_executor %4                              // id: %5
+  %6 = ref_element_addr [immutable] %2, #ImmutableBox.value // user: %7
+  %7 = load %6                                    // user: %8
+  store %7 to %0                                  // id: %8
+  %9 = tuple ()                                   // user: %10
+  return %9                                       // id: %10
+} // end sil function '$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_'
+
+// Task<>.init(name:priority:operation:)
+// Isolation: unspecified
+sil shared [available 12.0.0] @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC : $@convention(method) <Success, Failure where Success : Sendable, Failure == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>, @thin Task<Success, Never>.Type) -> @owned Task<Success, Never> {
+[%0: read v**.c*.v**, write v**.c*.v**, copy v**.c*.v**, destroy v**.c*.v**]
+[%1: read v**, write v**, copy v**, destroy v**]
+[%2: read v**.c*.v**, write v**.c*.v**, copy v**.**, destroy v**.c*.v**]
+[global: read,write,copy,destroy,allocate,deinit_barrier]
+// %0                                             // user: %41
+// %1                                             // users: %118, %82, %8
+// %2                                             // users: %27, %25, %6, %5
+bb0(%0 : $Optional<String>, %1 : $*Optional<TaskPriority>, %2 : $@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>, %3 : $@thin Task<Success, Never>.Type):
+  %4 = alloc_stack [var_decl] $@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success> // users: %86, %6, %123, %122, %66
+  strong_retain %2                                // id: %5
+  store %2 to %4                                  // id: %6
+  %7 = alloc_stack $Optional<TaskPriority>        // users: %21, %13, %10, %9, %8
+  copy_addr %1 to [init] %7                       // id: %8
+  switch_enum_addr %7, case #Optional.some!enumelt: bb2, case #Optional.none!enumelt: bb1 // id: %9
+
+bb1:                                              // Preds: bb0
+  destroy_addr %7                                 // id: %10
+  %11 = integer_literal $Builtin.Int64, 0         // user: %12
+  br bb3(%11)                                     // id: %12
+
+bb2:                                              // Preds: bb0
+  %13 = unchecked_take_enum_data_addr %7, #Optional.some!enumelt // users: %16, %15
+  // function_ref TaskPriority.rawValue.getter
+  %14 = function_ref @$sScP8rawValues5UInt8Vvg : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8 // user: %15
+  %15 = apply %14(%13) : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8 // user: %17
+  destroy_addr %13                                // id: %16
+  %17 = struct_extract %15, #UInt8._value         // user: %18
+  %18 = builtin "zextOrBitCast_Int8_Int64"(%17) : $Builtin.Int64 // user: %19
+  br bb3(%18)                                     // id: %19
+
+// %20                                            // user: %23
+bb3(%20 : $Builtin.Int64):                        // Preds: bb2 bb1
+  dealloc_stack %7                                // id: %21
+  %22 = integer_literal $Builtin.Int64, 7168      // user: %23
+  %23 = builtin "or_Int64"(%20, %22) : $Builtin.Int64 // user: %24
+  %24 = struct $Int (%23)                         // users: %92, %66
+  %25 = function_extract_isolation %2             // users: %28, %26
+  retain_value %25                                // id: %26
+  strong_release %2                               // id: %27
+  switch_enum %25, case #Optional.some!enumelt: bb5, case #Optional.none!enumelt: bb4 // id: %28
+
+bb4:                                              // Preds: bb3
+  %29 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %30
+  br bb6(%29)                                     // id: %30
+
+// %31                                            // user: %32
+bb5(%31 : $any Actor):                            // Preds: bb3
+  %32 = open_existential_ref %31 to $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  strong_release %32                              // id: %35
+  %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
+  %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38
+  br bb6(%37)                                     // id: %38
+
+// %39                                            // users: %92, %66
+bb6(%39 : $Optional<Builtin.Executor>):           // Preds: bb5 bb4
+  %40 = enum $Optional<Builtin.NativeObject>, #Optional.none!enumelt // user: %42
+  switch_enum %0, case #Optional.some!enumelt: bb8, case #Optional.none!enumelt: bb7 // id: %41
+
+bb7:                                              // Preds: bb6
+  br bb11(%40)                                    // id: %42
+
+// %43                                            // users: %46, %45
+bb8(%43 : $String):                               // Preds: bb6
+  // function_ref String.utf8CString.getter
+  %44 = function_ref @$sSS11utf8CStrings15ContiguousArrayVys4Int8VGvg : $@convention(method) (@guaranteed String) -> @owned ContiguousArray<Int8> // user: %45
+  %45 = apply %44(%43) : $@convention(method) (@guaranteed String) -> @owned ContiguousArray<Int8> // users: %76, %48
+  release_value %43                               // id: %46
+  // function_ref closure #1 in Task<>.init(name:priority:operation:)
+  %47 = function_ref @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfcBoSRys4Int8VGXEfU_ : $@convention(thin) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>) -> (@out Builtin.NativeObject, @error_indirect Never) // user: %66
+  %48 = struct_extract %45, #ContiguousArray._buffer // users: %73, %68, %55, %50
+  %49 = alloc_stack $Builtin.NativeObject         // users: %74, %75, %69, %66
+  %50 = struct_extract %48, #_ContiguousArrayBuffer._storage // user: %51
+  %51 = ref_tail_addr %50, $Int8                  // user: %52
+  %52 = address_to_pointer %51 to $Builtin.RawPointer // user: %53
+  %53 = struct $UnsafePointer<Int8> (%52)         // user: %54
+  %54 = enum $Optional<UnsafePointer<Int8>>, #Optional.some!enumelt, %53 // user: %64
+  %55 = struct_extract %48, #_ContiguousArrayBuffer._storage // user: %56
+  %56 = ref_element_addr %55, #__ContiguousArrayStorageBase.countAndCapacity // user: %57
+  %57 = struct_element_addr %56, #_ArrayBody._storage // user: %58
+  %58 = struct_element_addr %57, #_SwiftArrayBodyStorage.count // user: %59
+  %59 = struct_element_addr %58, #Int._value      // user: %60
+  %60 = load %59                                  // user: %61
+  %61 = builtin "assumeNonNegative_Int64"(%60) : $Builtin.Int64 // user: %62
+  %62 = builtin "assumeNonNegative_Int64"(%61) : $Builtin.Int64 // user: %63
+  %63 = struct $Int (%62)                         // user: %64
+  %64 = struct $UnsafeBufferPointer<Int8> (%54, %63) // user: %66
+  %65 = alloc_stack $Never                        // users: %72, %67, %66
+  try_apply %47<Success, Never>(%49, %65, %64, %24, %39, %4) : $@convention(thin) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>) -> (@out Builtin.NativeObject, @error_indirect Never), normal bb10, error bb9 // id: %66
+
+bb9:                                              // Preds: bb8
+  dealloc_stack %65                               // id: %67
+  fix_lifetime %48                                // id: %68
+  dealloc_stack %49                               // id: %69
+  unreachable                                     // id: %70
+
+bb10(%71 : $()):                                  // Preds: bb8
+  dealloc_stack %65                               // id: %72
+  fix_lifetime %48                                // id: %73
+  %74 = load %49                                  // user: %77
+  dealloc_stack %49                               // id: %75
+  release_value %45                               // id: %76
+  %77 = enum $Optional<Builtin.NativeObject>, #Optional.some!enumelt, %74 // user: %78
+  br bb11(%77)                                    // id: %78
+
+// %79                                            // users: %81, %80, %96
+bb11(%79 : $Optional<Builtin.NativeObject>):      // Preds: bb10 bb7
+  switch_enum %79, case #Optional.some!enumelt: bb13, case #Optional.none!enumelt: bb12 // id: %80
+
+bb12:                                             // Preds: bb11
+  release_value %79                               // id: %81
+  destroy_addr %1                                 // id: %82
+  %83 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // users: %92, %92
+  %84 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %92
+  %85 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %92
+  %86 = load %4                                   // users: %88, %87
+  strong_retain %86                               // id: %87
+  %88 = convert_function %86 to $@isolated(any) @async @callee_guaranteed () -> @out Success // user: %90
+  // function_ref thunk for @escaping @isolated(any) @callee_guaranteed @async () -> (@out A)
+  %89 = function_ref @$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %90
+  %90 = partial_apply [callee_guaranteed] %89<Success, Never>(%88) : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %91
+  %91 = convert_function %90 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <Success> // user: %92
+  %92 = builtin "createAsyncTask"<Success>(%24, %39, %83, %84, %85, %83, %91) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %93
+  %93 = tuple_extract %92, 0                      // user: %94
+  br bb16(%93)                                    // id: %94
+
+bb13(%95 : $Builtin.NativeObject):                // Preds: bb11
+  switch_enum %79, case #Optional.some!enumelt: bb15, case #Optional.none!enumelt: bb14 // id: %96
+
+bb14:                                             // Preds: bb13
+  %97 = string_literal utf8 "_Concurrency/arm64e-apple-macos.swiftinterface" // user: %104
+  %98 = integer_literal $Builtin.Word, 46         // user: %105
+  %99 = string_literal utf8 "Unexpectedly found nil while unwrapping an Optional value" // user: %101
+  %100 = integer_literal $Builtin.Word, 57        // user: %103
+  %101 = builtin "ptrtoint_Word"(%99) : $Builtin.Word // user: %103
+  %102 = integer_literal $Builtin.Int8, 2         // users: %111, %105, %103
+  %103 = struct $StaticString (%101, %100, %102)  // user: %115
+  %104 = builtin "ptrtoint_Word"(%97) : $Builtin.Word // user: %105
+  %105 = struct $StaticString (%104, %98, %102)   // user: %115
+  %106 = integer_literal $Builtin.Int64, 3294     // user: %107
+  %107 = struct $UInt (%106)                      // user: %115
+  %108 = string_literal utf8 "Fatal error"        // user: %110
+  %109 = integer_literal $Builtin.Word, 11        // user: %111
+  %110 = builtin "ptrtoint_Word"(%108) : $Builtin.Word // user: %111
+  %111 = struct $StaticString (%110, %109, %102)  // user: %115
+  %112 = integer_literal $Builtin.Int32, 1        // user: %113
+  %113 = struct $UInt32 (%112)                    // user: %115
+  // function_ref _assertionFailure(_:_:file:line:flags:)
+  %114 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %115
+  %115 = apply %114(%111, %103, %105, %107, %113) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %116
+
+// %117                                           // user: %119
+bb15(%117 : $Builtin.NativeObject):               // Preds: bb13
+  destroy_addr %1                                 // id: %118
+  br bb16(%117)                                   // id: %119
+
+// %120                                           // user: %121
+bb16(%120 : $Builtin.NativeObject):               // Preds: bb15 bb12
+  %121 = struct $Task<Success, Never> (%120)      // user: %124
+  destroy_addr %4                                 // id: %122
+  dealloc_stack %4                                // id: %123
+  return %121                                     // id: %124
+} // end sil function '$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC'
+
+// caseE(_:)
+// Isolation: global_actor. type: MainActor
+sil hidden @$s4main5caseEySiAA12ImmutableBoxCF : $@convention(thin) (@guaranteed ImmutableBox) -> Int {
+// %0 "box"                                       // users: %2, %1
+bb0(%0 : $ImmutableBox):
+  debug_value %0, let, name "box", argno 1        // id: %1
+  %2 = ref_element_addr [immutable] %0, #ImmutableBox.value // user: %3
+  %3 = load %2                                    // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s4main5caseEySiAA12ImmutableBoxCF'
+
+// _allocateUninitializedArray<A>(_:)
+// Isolation: unspecified
+sil [heuristic_always_inline] [_semantics "array.uninitialized_intrinsic"] @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <Element> (Builtin.Word) -> (@owned Array<Element>, Builtin.RawPointer)
+
+// DefaultStringInterpolation.init(literalCapacity:interpolationCount:)
+// Isolation: unspecified
+sil @$ss26DefaultStringInterpolationV15literalCapacity18interpolationCountABSi_SitcfC : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation
+
+// String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+// Isolation: unspecified
+sil [heuristic_always_inline] [readonly] [_semantics "string.makeUTF8"] @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String
+
+// DefaultStringInterpolation.appendLiteral(_:)
+// Isolation: unspecified
+sil @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
+
+// DefaultStringInterpolation.appendInterpolation<A>(_:)
+// Isolation: unspecified
+sil @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <T where T : CustomStringConvertible> (@in_guaranteed T, @inout DefaultStringInterpolation) -> ()
+
+// String.init(stringInterpolation:)
+// Isolation: unspecified
+sil [readonly] @$sSS19stringInterpolationSSs013DefaultStringB0V_tcfC : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String
+
+// _finalizeUninitializedArray<A>(_:)
+// Isolation: unspecified
+sil shared [readnone] [_semantics "array.finalize_intrinsic"] @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <Element> (@owned Array<Element>) -> @owned Array<Element> {
+[%0: escape! v** => %r.v**, escape! v**.c*.v** => %r.v**.c*.v**]
+// %0                                             // user: %2
+bb0(%0 : $Array<Element>):
+  %1 = alloc_stack [var_decl] $Array<Element>     // users: %5, %2, %6, %4
+  store %0 to %1                                  // id: %2
+  // function_ref Array._endMutation()
+  %3 = function_ref @$sSa12_endMutationyyF : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> () // user: %4
+  %4 = apply %3<Element>(%1) : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> ()
+  %5 = load %1                                    // user: %7
+  dealloc_stack %1                                // id: %6
+  return %5                                       // id: %7
+} // end sil function '$ss27_finalizeUninitializedArrayySayxGABnlF'
+
+// default argument 1 of print(_:separator:terminator:)
+// Isolation: unspecified
+sil shared @$ss5print_9separator10terminatoryypd_S2StFfA0_ : $@convention(thin) () -> @owned String {
+[global: read,copy,deinit_barrier]
+bb0:
+  %0 = string_literal utf8 " "                    // user: %5
+  %1 = integer_literal $Builtin.Word, 1           // user: %5
+  %2 = integer_literal $Builtin.Int1, -1          // user: %5
+  %3 = metatype $@thin String.Type                // user: %5
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %4 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %5
+  %5 = apply %4(%0, %1, %2, %3) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %6
+  return %5                                       // id: %6
+} // end sil function '$ss5print_9separator10terminatoryypd_S2StFfA0_'
+
+// default argument 2 of print(_:separator:terminator:)
+// Isolation: unspecified
+sil shared @$ss5print_9separator10terminatoryypd_S2StFfA1_ : $@convention(thin) () -> @owned String {
+[global: read,copy,deinit_barrier]
+bb0:
+  %0 = string_literal utf8 "\n"                   // user: %5
+  %1 = integer_literal $Builtin.Word, 1           // user: %5
+  %2 = integer_literal $Builtin.Int1, -1          // user: %5
+  %3 = metatype $@thin String.Type                // user: %5
+  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
+  %4 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %5
+  %5 = apply %4(%0, %1, %2, %3) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %6
+  return %5                                       // id: %6
+} // end sil function '$ss5print_9separator10terminatoryypd_S2StFfA1_'
+
+// print(_:separator:terminator:)
+// Isolation: unspecified
+sil @$ss5print_9separator10terminatoryypd_S2StF : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> ()
+
+// Array._endMutation()
+sil shared [_semantics "array.end_mutation"] @$sSa12_endMutationyyF : $@convention(method) <Element> (@inout Array<Element>) -> () {
+[%0: noescape! **, read s0.s0.s0.v**, write v**]
+[global: ]
+// %0                                             // users: %9, %1
+bb0(%0 : $*Array<Element>):
+  %1 = struct_element_addr %0, #Array._buffer     // user: %2
+  %2 = struct_element_addr %1, #_ArrayBuffer._storage // user: %3
+  %3 = struct_element_addr %2, #_BridgeStorage.rawValue // user: %4
+  %4 = load %3                                    // user: %5
+  %5 = end_cow_mutation %4                        // user: %6
+  %6 = struct $_BridgeStorage<__ContiguousArrayStorageBase> (%5) // user: %7
+  %7 = struct $_ArrayBuffer<Element> (%6)         // user: %8
+  %8 = struct $Array<Element> (%7)                // user: %9
+  store %8 to %0                                  // id: %9
+  %10 = tuple ()                                  // user: %11
+  return %10                                      // id: %11
+} // end sil function '$sSa12_endMutationyyF'
+
+// TaskPriority.rawValue.getter
+sil [available 12.0.0] @$sScP8rawValues5UInt8Vvg : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8
+
+// String.utf8CString.getter
+sil [readonly] [_semantics "string.getUTF8CString"] @$sSS11utf8CStrings15ContiguousArrayVys4Int8VGvg : $@convention(method) (@guaranteed String) -> @owned ContiguousArray<Int8>
+
+// closure #1 in static Task<>.detached(name:priority:operation:)
+sil shared @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZBoSRys4Int8VGXEfU_ : $@convention(thin) <Success, Failure where Success : Sendable, Failure == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>) -> (@out Builtin.NativeObject, @error_indirect Never) {
+// %0                                             // user: %42
+// %2                                             // user: %9
+// %3                                             // user: %40
+// %4                                             // user: %40
+// %5                                             // user: %34
+bb0(%0 : $*Builtin.NativeObject, %1 : $*Never, %2 : $UnsafeBufferPointer<Int8>, %3 : @closureCapture $Int, %4 : @closureCapture $Optional<Builtin.Executor>, %5 : @closureCapture $*@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>):
+  %6 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %40
+  %7 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %40
+  %8 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %40
+  %9 = struct_extract %2, #UnsafeBufferPointer._position // user: %10
+  switch_enum %9, case #Optional.some!enumelt: bb2, case #Optional.none!enumelt: bb1 // id: %10
+
+bb1:                                              // Preds: bb0
+  %11 = string_literal utf8 "_Concurrency/arm64e-apple-macos.swiftinterface" // user: %18
+  %12 = integer_literal $Builtin.Word, 46         // user: %19
+  %13 = string_literal utf8 "Unexpectedly found nil while unwrapping an Optional value" // user: %15
+  %14 = integer_literal $Builtin.Word, 57         // user: %17
+  %15 = builtin "ptrtoint_Word"(%13) : $Builtin.Word // user: %17
+  %16 = integer_literal $Builtin.Int8, 2          // users: %25, %19, %17
+  %17 = struct $StaticString (%15, %14, %16)      // user: %29
+  %18 = builtin "ptrtoint_Word"(%11) : $Builtin.Word // user: %19
+  %19 = struct $StaticString (%18, %12, %16)      // user: %29
+  %20 = integer_literal $Builtin.Int64, 3389      // user: %21
+  %21 = struct $UInt (%20)                        // user: %29
+  %22 = string_literal utf8 "Fatal error"         // user: %24
+  %23 = integer_literal $Builtin.Word, 11         // user: %25
+  %24 = builtin "ptrtoint_Word"(%22) : $Builtin.Word // user: %25
+  %25 = struct $StaticString (%24, %23, %16)      // user: %29
+  %26 = integer_literal $Builtin.Int32, 1         // user: %27
+  %27 = struct $UInt32 (%26)                      // user: %29
+  // function_ref _assertionFailure(_:_:file:line:flags:)
+  %28 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %29
+  %29 = apply %28(%25, %17, %19, %21, %27) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %30
+
+// %31                                            // user: %32
+bb2(%31 : $UnsafePointer<Int8>):                  // Preds: bb0
+  %32 = struct_extract %31, #UnsafePointer._rawValue // user: %33
+  %33 = enum $Optional<Builtin.RawPointer>, #Optional.some!enumelt, %32 // user: %40
+  %34 = load %5                                   // users: %36, %35
+  strong_retain %34                               // id: %35
+  %36 = convert_function %34 to $@isolated(any) @async @callee_guaranteed () -> @out Success // user: %38
+  // function_ref thunk for @escaping @isolated(any) @callee_guaranteed @async () -> (@out A)
+  %37 = function_ref @$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %38
+  %38 = partial_apply [callee_guaranteed] %37<Success, Never>(%36) : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %39
+  %39 = convert_function %38 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <Success> // user: %40
+  %40 = builtin "createAsyncTask"<Success>(%3, %4, %6, %7, %8, %33, %39) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %41
+  %41 = tuple_extract %40, 0                      // user: %42
+  store %41 to %0                                 // id: %42
+  %43 = tuple ()                                  // user: %44
+  return %43                                      // id: %44
+} // end sil function '$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZBoSRys4Int8VGXEfU_'
+
+// thunk for @escaping @isolated(any) @callee_guaranteed @async () -> (@out A)
+sil shared [transparent] [reabstraction_thunk] @$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR : $@convention(thin) @async <Success, Failure where Success : Sendable, Failure == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out Success) -> (@out Success, @error any Error) {
+// %0                                             // user: %2
+// %1                                             // user: %2
+bb0(%0 : $*Success, %1 : $@isolated(any) @async @callee_guaranteed () -> @out Success):
+  %2 = apply %1(%0) : $@isolated(any) @async @callee_guaranteed () -> @out Success
+  %3 = tuple ()                                   // user: %4
+  return %3                                       // id: %4
+} // end sil function '$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR'
+
+// _assertionFailure(_:_:file:line:flags:)
+sil [noinline] [_semantics "programtermination_point"] @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+
+// Task.init(_:)
+sil shared [available 12.0.0] @$sScTyScTyxq_GBocfC : $@convention(method) <Success, Failure where Success : Sendable, Failure : Error> (@owned Builtin.NativeObject, @thin Task<Success, Failure>.Type) -> @owned Task<Success, Failure> {
+[%0: escape v** => %r.s0.v**, escape v**.c*.v** => %r.s0.v**.c*.v**]
+[global: ]
+// %0                                             // user: %2
+bb0(%0 : $Builtin.NativeObject, %1 : $@thin Task<Success, Failure>.Type):
+  %2 = struct $Task<Success, Failure> (%0)        // user: %3
+  return %2                                       // id: %3
+} // end sil function '$sScTyScTyxq_GBocfC'
+
+// closure #1 in Task<>.init(name:priority:operation:)
+sil shared @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfcBoSRys4Int8VGXEfU_ : $@convention(thin) <Success, Failure where Success : Sendable, Failure == Never> (UnsafeBufferPointer<Int8>, Int, Optional<Builtin.Executor>, @inout_aliasable @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>) -> (@out Builtin.NativeObject, @error_indirect Never) {
+// %0                                             // user: %42
+// %2                                             // user: %9
+// %3                                             // user: %40
+// %4                                             // user: %40
+// %5                                             // user: %34
+bb0(%0 : $*Builtin.NativeObject, %1 : $*Never, %2 : $UnsafeBufferPointer<Int8>, %3 : @closureCapture $Int, %4 : @closureCapture $Optional<Builtin.Executor>, %5 : @closureCapture $*@isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <Success>):
+  %6 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %40
+  %7 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %40
+  %8 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %40
+  %9 = struct_extract %2, #UnsafeBufferPointer._position // user: %10
+  switch_enum %9, case #Optional.some!enumelt: bb2, case #Optional.none!enumelt: bb1 // id: %10
+
+bb1:                                              // Preds: bb0
+  %11 = string_literal utf8 "_Concurrency/arm64e-apple-macos.swiftinterface" // user: %18
+  %12 = integer_literal $Builtin.Word, 46         // user: %19
+  %13 = string_literal utf8 "Unexpectedly found nil while unwrapping an Optional value" // user: %15
+  %14 = integer_literal $Builtin.Word, 57         // user: %17
+  %15 = builtin "ptrtoint_Word"(%13) : $Builtin.Word // user: %17
+  %16 = integer_literal $Builtin.Int8, 2          // users: %25, %19, %17
+  %17 = struct $StaticString (%15, %14, %16)      // user: %29
+  %18 = builtin "ptrtoint_Word"(%11) : $Builtin.Word // user: %19
+  %19 = struct $StaticString (%18, %12, %16)      // user: %29
+  %20 = integer_literal $Builtin.Int64, 3273      // user: %21
+  %21 = struct $UInt (%20)                        // user: %29
+  %22 = string_literal utf8 "Fatal error"         // user: %24
+  %23 = integer_literal $Builtin.Word, 11         // user: %25
+  %24 = builtin "ptrtoint_Word"(%22) : $Builtin.Word // user: %25
+  %25 = struct $StaticString (%24, %23, %16)      // user: %29
+  %26 = integer_literal $Builtin.Int32, 1         // user: %27
+  %27 = struct $UInt32 (%26)                      // user: %29
+  // function_ref _assertionFailure(_:_:file:line:flags:)
+  %28 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %29
+  %29 = apply %28(%25, %17, %19, %21, %27) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %30
+
+// %31                                            // user: %32
+bb2(%31 : $UnsafePointer<Int8>):                  // Preds: bb0
+  %32 = struct_extract %31, #UnsafePointer._rawValue // user: %33
+  %33 = enum $Optional<Builtin.RawPointer>, #Optional.some!enumelt, %32 // user: %40
+  %34 = load %5                                   // users: %36, %35
+  strong_retain %34                               // id: %35
+  %36 = convert_function %34 to $@isolated(any) @async @callee_guaranteed () -> @out Success // user: %38
+  // function_ref thunk for @escaping @isolated(any) @callee_guaranteed @async () -> (@out A)
+  %37 = function_ref @$sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTR : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %38
+  %38 = partial_apply [callee_guaranteed] %37<Success, Never>(%36) : $@convention(thin) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed @isolated(any) @async @callee_guaranteed () -> @out τ_0_0) -> (@out τ_0_0, @error any Error) // user: %39
+  %39 = convert_function %38 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <Success> // user: %40
+  %40 = builtin "createAsyncTask"<Success>(%3, %4, %6, %7, %8, %33, %39) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %41
+  %41 = tuple_extract %40, 0                      // user: %42
+  store %41 to %0                                 // id: %42
+  %43 = tuple ()                                  // user: %44
+  return %43                                      // id: %44
+} // end sil function '$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfcBoSRys4Int8VGXEfU_'
+
+sil_vtable ImmutableBox {
+  #ImmutableBox.init!allocator: (ImmutableBox.Type) -> (Int) -> ImmutableBox : @$s4main12ImmutableBoxCyACSicfC	// ImmutableBox.__allocating_init(_:)
+  #ImmutableBox.deinit!deallocator: @$s4main12ImmutableBoxCfD	// ImmutableBox.__deallocating_deinit
+}
+
+sil_vtable Holder {
+  #Holder.read: (isolated Holder) -> () -> Int : @$s4main6HolderC4readSiyF	// Holder.read()
+  #Holder.init!allocator: (Holder.Type) -> () -> Holder : @$s4main6HolderCACycfC	// Holder.__allocating_init()
+  #Holder.deinit!deallocator: @$s4main6HolderCfD	// Holder.__deallocating_deinit
+}
+
+sil_witness_table hidden Holder: Actor module main {
+  method #Actor.unownedExecutor!getter: <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor : @$s4main6HolderCScAAAScA15unownedExecutorScevgTW	// protocol witness for Actor.unownedExecutor.getter in conformance Holder
+}
+
+
+
+// Mappings from '#fileID' to '#filePath':
+//   'main/main.swift' => '/Users/msalari/Downloads/swift6-arc-refcount-lab/Sources/ARCRefcountLab/main.swift'
+
+
