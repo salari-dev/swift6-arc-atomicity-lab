@@ -18,6 +18,13 @@
 - [x] Raw install/launch stdout, stderr, and exit statuses are preserved under `Evidence/SimulatorLaunch/` by `run-simulator-validation.sh`.
 - [x] Alternate official toolchain availability checked and absence documented honestly.
 - [x] Official Swift language documentation and relevant evolution proposals are cited in `official-language-sources.md`.
+- [x] Final-pass baseline is recorded in `FinalPass/baseline.txt`.
+- [x] Upstream Swift test search is documented in `upstream-tests.md`.
+- [x] Concurrency-versus-ARC selection table is documented in `concurrency-vs-arc-selection.md`.
+- [x] Four screenshots have raw/source mappings in `Screenshots/INDEX.md`.
+- [x] Article-ready SVG/PNG figure is derived from validated data.
+- [x] Claim audit and explicit exclusions are documented in `claim-audit.md`.
+- [x] Final reproduction and evidence scripts have been rerun.
 
 Simulator target: iPhone 17 (not Pro), UUID `08D5928E-E08E-44D0-B672-2248F89EB331`; both scripts use the installed `iPhoneSimulator26.5.sdk` and the deliberate iOS 18.0 deployment target.
 

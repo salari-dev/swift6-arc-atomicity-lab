@@ -43,3 +43,11 @@ The evidence does not support “Swift ARC is always atomic,” “Swift 6 makes
 ## Open questions and article-worthiness
 
 The strongest publishable angle is “Swift 6 data-race checking and ARC lifetime accounting are different contracts.” Public source plus compiler output can demonstrate the distinction, but the exact atomic/non-atomic selection remains compiler/runtime implementation detail. Score: 8/10. The controlled frontend assumption is a useful surprising result; no second official toolchain was installed.
+
+## Final result
+
+Swift 6 language checking establishes compile-time restrictions on unsafe sharing of mutable state. ARC establishes ownership/lifetime operations; the runtime implements atomic and non-atomic entry points. Ordinary tested Apple Swift 6.3.3 emitted `swift_retain/release`. Actor isolation, Sendable, and `@unchecked Sendable` did not change that entry-point selection in the tested cases. The hidden `-assume-single-threaded` frontend state changed the compiler's default atomicity and emitted `swift_nonatomic_retain/release`; compiler source traces that path through `CompilerInvocation`, `SILOptions`, `SILModule`, `Atomicity`, and `GenHeap`. No second compatible official toolchain was available, and no upstream compiler regression test was found that directly checks this user-Swift symbol selection. The remaining behavior is implementation detail and must not be generalized into a language rule.
+
+## Article readiness gate
+
+A–J: YES. We have a non-obvious, reproducible result supported by generated output, compiler source, runtime source, a negative control, clean visuals, and precise treatment of the hidden flag. The second-toolchain check and upstream-test search are honestly documented. The project is `READY FOR ARTICLE`; the article itself is intentionally not written here.

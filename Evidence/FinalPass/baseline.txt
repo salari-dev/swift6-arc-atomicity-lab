@@ -1,0 +1,4 @@
+starting_commit=23945c0080915bb32725bbd9eb3b0c4a61af2fe5
+working_tree_status=clean_for_repository; unrelated_untracked=ceva.zip v2.zip
+primary_ab_source_sha256=3ad98cb068a529a1cfd4e0a5873a33db1e3039a1ccffbddd752940a9b7842b94
+environment=macOS 26.6.2; Xcode 26.6; Apple Swift 6.3.3; arm64; Swift language mode 6; primary target arm64-apple-macosx26.0; simulator iPhone 17 with iPhoneSimulator26.5.sdk

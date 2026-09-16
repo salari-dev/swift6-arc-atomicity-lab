@@ -1,0 +1,8 @@
+Observed entry points — Apple Swift 6.3.3
+scope: tested cases; normal toolchain
+
+actor isolation       swift_retain / swift_release
+Sendable              swift_retain / swift_release
+@unchecked Sendable   swift_retain / swift_release
+
+Source: normal-Onone.ll and normal-O.ll

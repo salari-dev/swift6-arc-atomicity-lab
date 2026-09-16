@@ -1,0 +1,13 @@
+Swift source commit: 99659c99d7fe22212afb806e986d7ecc6496f796
+swift/include/swift/SIL/SILModule.h:1172-1174
+
+1168: 
+1169:   /// Returns true if the builtin or intrinsic is no-return.
+1170:   bool isNoReturnBuiltinOrIntrinsic(Identifier Name);
+1171: 
+1172:   /// Returns true if the default atomicity of the module is Atomic.
+1173:   bool isDefaultAtomic() const {
+1174:     return !getOptions().AssumeSingleThreaded;
+1175:   }
+1176: 
+https://github.com/swiftlang/swift/blob/99659c99d7fe22212afb806e986d7ecc6496f796/include/swift/SIL/SILModule.h#L1172-L1174

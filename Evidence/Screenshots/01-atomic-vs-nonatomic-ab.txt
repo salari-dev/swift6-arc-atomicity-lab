@@ -1,0 +1,30 @@
+$ swiftc -swift-version 6 -emit-ir main.swift -o normal-Onone.ll
+$ swiftc -swift-version 6 -Xfrontend -assume-single-threaded -emit-ir main.swift -o singlethread-Onone.ll
+
+normal-Onone.ll
+%11 = call ptr @swift_retain(ptr returned %4) #13
+%19 = call ptr @swift_retain(ptr returned %18) #13
+%3 = call ptr @swift_retain(ptr returned %2) #13
+%7 = call ptr @swift_retain(ptr returned %.reload) #13
+%81 = call ptr @swift_retain(ptr returned %80) #13
+%82 = call ptr @swift_retain(ptr returned %81) #13
+call void @swift_release(ptr %.reload) #4
+call void @swift_release(ptr %.reload13) #4
+call void @swift_release(ptr %.reload22) #4
+call void @swift_release(ptr %.reload37) #4
+call void @swift_release(ptr %109) #4
+call void @swift_release(ptr %110) #4
+
+singlethread-Onone.ll
+%11 = call ptr @swift_nonatomic_retain(ptr returned %4) #13
+%19 = call ptr @swift_nonatomic_retain(ptr returned %18) #13
+%3 = call ptr @swift_nonatomic_retain(ptr returned %2) #13
+%7 = call ptr @swift_nonatomic_retain(ptr returned %.reload) #13
+%81 = call ptr @swift_nonatomic_retain(ptr returned %80) #13
+%82 = call ptr @swift_nonatomic_retain(ptr returned %81) #13
+call void @swift_nonatomic_release(ptr %.reload) #4
+call void @swift_nonatomic_release(ptr %.reload13) #4
+call void @swift_nonatomic_release(ptr %.reload22) #4
+call void @swift_nonatomic_release(ptr %.reload37) #4
+call void @swift_nonatomic_release(ptr %109) #4
+call void @swift_nonatomic_release(ptr %110) #4
