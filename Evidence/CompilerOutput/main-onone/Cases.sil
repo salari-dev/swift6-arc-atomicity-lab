@@ -4,16 +4,24 @@ import Builtin
 import Swift
 import SwiftShims
 
-import Foundation
+final class PlainMutableBox {
+  @_hasStorage @_hasInitialValue final var value: Int { get set }
+  @objc deinit
+  init()
+}
 
-final class ImmutableBox : @unchecked Sendable {
+final class SendableImmutableBox : Sendable {
   @_hasStorage final let value: Int { get }
   init(_ value: Int)
   @objc deinit
 }
 
-actor Holder {
-  @_hasStorage @_hasInitialValue private final let box: ImmutableBox { get }
+func caseA_local() -> Int
+
+func caseB_sendable(_ x: SendableImmutableBox) async -> Int
+
+actor CaseCActor {
+  @_hasStorage @_hasInitialValue final let x: SendableImmutableBox { get }
   func read() -> Int
   @objc deinit
   init()
@@ -23,355 +31,44 @@ actor Holder {
   }
 }
 
-func caseA() -> Int
+func caseD_crossing(_ x: SendableImmutableBox) async -> Int
 
-func caseB(_ box: ImmutableBox) async -> Int
+final class UncheckedBox : @unchecked Sendable {
+  @_hasStorage @_hasInitialValue final var value: Int { get set }
+  @objc deinit
+  init()
+}
 
-func caseC() async -> Int
+func caseE_unchecked(_ x: UncheckedBox) async -> Int
 
-func caseD(_ box: ImmutableBox) async -> Int
+func caseG_nonEscaping(_ x: SendableImmutableBox) -> Int
 
-@MainActor func caseE(_ box: ImmutableBox) -> Int
+func caseH_escaping(_ x: SendableImmutableBox) async -> Int
 
-func main() async
+@MainActor @_hasStorage @_hasInitialValue let caseI_global: SendableImmutableBox { get }
+
+func caseJ_generic<T>(_ x: T) -> T where T : Sendable
+
+// caseI_global
+sil_global hidden [let] @$s5Cases12caseI_globalAA20SendableImmutableBoxCvp : $SendableImmutableBox
 
 // main
 // Isolation: unspecified
 sil @main : $@convention(c) (Int32, UnsafeMutablePointer<Optional<UnsafeMutablePointer<Int8>>>) -> Int32 {
 bb0(%0 : $Int32, %1 : $UnsafeMutablePointer<Optional<UnsafeMutablePointer<Int8>>>):
-  // function_ref async_Main
-  %2 = function_ref @async_Main : $@convention(thin) @async () -> () // user: %11
-  %3 = integer_literal $Builtin.Int64, 2048       // user: %4
-  %4 = struct $Int (%3)                           // user: %13
-  %5 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %13
-  %6 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %13
-  %7 = enum $Optional<Builtin.Executor>, #Optional.none!enumelt // user: %13
-  %8 = enum $Optional<any TaskExecutor>, #Optional.none!enumelt // user: %13
-  %9 = enum $Optional<Builtin.RawPointer>, #Optional.none!enumelt // user: %13
-  // function_ref thunk for @escaping @convention(thin) @async () -> ()
-  %10 = function_ref @$sIetH_yts5Error_pIegHrzo_TR : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) // user: %11
-  %11 = partial_apply [callee_guaranteed] %10(%2) : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) // user: %12
-  %12 = convert_function %11 to $@async @callee_guaranteed @substituted <τ_0_0> () -> (@out τ_0_0, @error any Error) for <()> // user: %13
-  %13 = builtin "createAsyncTask"<()>(%4, %5, %6, %7, %8, %9, %12) : $(Builtin.NativeObject, Builtin.RawPointer) // user: %14
-  %14 = tuple_extract %13, 0                      // user: %16
-  // function_ref swift_job_run
-  %15 = function_ref @swift_job_run : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> () // user: %20
-  %16 = builtin "convertTaskToJob"(%14) : $Builtin.Job // user: %17
-  %17 = struct $UnownedJob (%16)                  // user: %20
-  %18 = builtin "buildMainActorExecutorRef"() : $Builtin.Executor // user: %19
-  %19 = struct $UnownedSerialExecutor (%18)       // user: %20
-  %20 = apply %15(%17, %19) : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> ()
-  // function_ref swift_task_asyncMainDrainQueue
-  %21 = function_ref @swift_task_asyncMainDrainQueue : $@convention(thin) () -> Never // user: %22
-  %22 = apply %21() : $@convention(thin) () -> Never
-  unreachable                                     // id: %23
+  alloc_global @$s5Cases12caseI_globalAA20SendableImmutableBoxCvp // id: %2
+  %3 = global_addr @$s5Cases12caseI_globalAA20SendableImmutableBoxCvp : $*SendableImmutableBox // user: %9
+  %4 = metatype $@thick SendableImmutableBox.Type // user: %8
+  %5 = integer_literal $Builtin.Int64, 9          // user: %6
+  %6 = struct $Int (%5)                           // user: %8
+  // function_ref SendableImmutableBox.__allocating_init(_:)
+  %7 = function_ref @$s5Cases20SendableImmutableBoxCyACSicfC : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %8
+  %8 = apply %7(%6, %4) : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %9
+  store %8 to %3                                  // id: %9
+  %10 = integer_literal $Builtin.Int32, 0         // user: %11
+  %11 = struct $Int32 (%10)                       // user: %12
+  return %11                                      // id: %12
 } // end sil function 'main'
-
-// async_Main
-// Isolation: unspecified
-sil private @async_Main : $@convention(thin) @async () -> () {
-bb0:
-  %0 = metatype $@thick MainActor.Type            // user: %2
-  // function_ref static MainActor.shared.getter
-  %1 = function_ref @$sScM6sharedScMvgZ : $@convention(method) (@thick MainActor.Type) -> @owned MainActor // user: %2
-  %2 = apply %1(%0) : $@convention(method) (@thick MainActor.Type) -> @owned MainActor // user: %3
-  %3 = init_existential_ref %2 : $MainActor : $MainActor, $any Actor // user: %4
-  %4 = enum $Optional<any Actor>, #Optional.some!enumelt, %3 // users: %8, %7
-  // function_ref main()
-  %5 = function_ref @$s4mainAAyyYaF : $@convention(thin) @async () -> () // user: %6
-  %6 = apply %5() : $@convention(thin) @async () -> ()
-  hop_to_executor %4                              // id: %7
-  release_value %4                                // id: %8
-  %9 = integer_literal $Builtin.Int32, 0          // user: %10
-  %10 = struct $Int32 (%9)                        // user: %12
-  // function_ref @objc exit(_:)
-  %11 = function_ref @$sSo4exitys5NeverOs5Int32VFTo : $@convention(c) (Int32) -> Never // user: %12
-  %12 = apply %11(%10) : $@convention(c) (Int32) -> Never
-  unreachable                                     // id: %13
-} // end sil function 'async_Main'
-
-// thunk for @escaping @convention(thin) @async () -> ()
-sil shared [transparent] [reabstraction_thunk] @$sIetH_yts5Error_pIegHrzo_TR : $@convention(thin) @async (@convention(thin) @async () -> ()) -> (@out (), @error any Error) {
-// %1                                             // user: %2
-bb0(%0 : $*(), %1 : $@convention(thin) @async () -> ()):
-  %2 = apply %1() : $@convention(thin) @async () -> ()
-  %3 = tuple ()                                   // user: %4
-  return %3                                       // id: %4
-} // end sil function '$sIetH_yts5Error_pIegHrzo_TR'
-
-// swift_job_run
-// Isolation: unspecified
-sil [available 12.0.0] @swift_job_run : $@convention(thin) (UnownedJob, UnownedSerialExecutor) -> ()
-
-// swift_task_asyncMainDrainQueue
-// Isolation: unspecified
-sil [available 12.0.0] @swift_task_asyncMainDrainQueue : $@convention(thin) () -> Never
-
-// static MainActor.shared.getter
-// Isolation: unspecified
-sil [available 12.0.0] @$sScM6sharedScMvgZ : $@convention(method) (@thick MainActor.Type) -> @owned MainActor
-
-// main()
-// Isolation: unspecified
-sil hidden @$s4mainAAyyYaF : $@convention(thin) @async () -> () {
-bb0:
-  %0 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %107, %80, %59, %1
-  hop_to_executor %0                              // id: %1
-  %2 = integer_literal $Builtin.Word, 1           // user: %4
-  // function_ref _allocateUninitializedArray<A>(_:)
-  %3 = function_ref @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %4
-  %4 = apply %3<Any>(%2) : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %5
-  %5 = tuple_extract %4, 0                        // users: %6, %136
-  %6 = struct_extract %5, #Array._buffer          // user: %7
-  %7 = struct_extract %6, #_ArrayBuffer._storage  // user: %8
-  %8 = struct_extract %7, #_BridgeStorage.rawValue // user: %9
-  %9 = unchecked_ref_cast %8 to $__ContiguousArrayStorageBase // user: %10
-  %10 = ref_tail_addr %9, $Any                    // user: %133
-  %11 = alloc_stack [var_decl] $DefaultStringInterpolation // users: %126, %19, %26, %35, %46, %62, %73, %83, %94, %110, %121, %129, %128
-  %12 = integer_literal $Builtin.Int64, 11        // user: %13
-  %13 = struct $Int (%12)                         // user: %18
-  %14 = integer_literal $Builtin.Int64, 4         // user: %15
-  %15 = struct $Int (%14)                         // user: %18
-  %16 = metatype $@thin DefaultStringInterpolation.Type // user: %18
-  // function_ref DefaultStringInterpolation.init(literalCapacity:interpolationCount:)
-  %17 = function_ref @$ss26DefaultStringInterpolationV15literalCapacity18interpolationCountABSi_SitcfC : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation // user: %18
-  %18 = apply %17(%13, %15, %16) : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation // user: %19
-  store %18 to %11                                // id: %19
-  %20 = string_literal utf8 "A="                  // user: %25
-  %21 = integer_literal $Builtin.Word, 2          // user: %25
-  %22 = integer_literal $Builtin.Int1, -1         // user: %25
-  %23 = metatype $@thin String.Type               // user: %25
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %24 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %25
-  %25 = apply %24(%20, %21, %22, %23) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %30, %28
-  %26 = begin_access [modify] [static] %11        // users: %29, %28
-  // function_ref DefaultStringInterpolation.appendLiteral(_:)
-  %27 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %28
-  %28 = apply %27(%25, %26) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-  end_access %26                                  // id: %29
-  release_value %25                               // id: %30
-  // function_ref caseA()
-  %31 = function_ref @$s4main5caseASiyF : $@convention(thin) () -> Int // user: %32
-  %32 = apply %31() : $@convention(thin) () -> Int // user: %34
-  %33 = alloc_stack $Int                          // users: %34, %39, %37
-  store %32 to %33                                // id: %34
-  %35 = begin_access [modify] [static] %11        // users: %38, %37
-  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
-  %36 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %37
-  %37 = apply %36<Int>(%33, %35) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
-  end_access %35                                  // id: %38
-  dealloc_stack %33                               // id: %39
-  %40 = string_literal utf8 " B="                 // user: %45
-  %41 = integer_literal $Builtin.Word, 3          // user: %45
-  %42 = integer_literal $Builtin.Int1, -1         // user: %45
-  %43 = metatype $@thin String.Type               // user: %45
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %44 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %45
-  %45 = apply %44(%40, %41, %42, %43) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %50, %48
-  %46 = begin_access [modify] [static] %11        // users: %49, %48
-  // function_ref DefaultStringInterpolation.appendLiteral(_:)
-  %47 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %48
-  %48 = apply %47(%45, %46) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-  end_access %46                                  // id: %49
-  release_value %45                               // id: %50
-  %51 = metatype $@thick ImmutableBox.Type        // user: %55
-  %52 = integer_literal $Builtin.Int64, 2         // user: %53
-  %53 = struct $Int (%52)                         // user: %55
-  // function_ref ImmutableBox.__allocating_init(_:)
-  %54 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %55
-  %55 = apply %54(%53, %51) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %58, %57
-  // function_ref caseB(_:)
-  %56 = function_ref @$s4main5caseBySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %57
-  %57 = apply %56(%55) : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %61
-  strong_release %55                              // id: %58
-  hop_to_executor %0                              // id: %59
-  %60 = alloc_stack $Int                          // users: %61, %66, %64
-  store %57 to %60                                // id: %61
-  %62 = begin_access [modify] [static] %11        // users: %65, %64
-  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
-  %63 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %64
-  %64 = apply %63<Int>(%60, %62) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
-  end_access %62                                  // id: %65
-  dealloc_stack %60                               // id: %66
-  %67 = string_literal utf8 " C="                 // user: %72
-  %68 = integer_literal $Builtin.Word, 3          // user: %72
-  %69 = integer_literal $Builtin.Int1, -1         // user: %72
-  %70 = metatype $@thin String.Type               // user: %72
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %71 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %72
-  %72 = apply %71(%67, %68, %69, %70) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %77, %75
-  %73 = begin_access [modify] [static] %11        // users: %76, %75
-  // function_ref DefaultStringInterpolation.appendLiteral(_:)
-  %74 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %75
-  %75 = apply %74(%72, %73) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-  end_access %73                                  // id: %76
-  release_value %72                               // id: %77
-  // function_ref caseC()
-  %78 = function_ref @$s4main5caseCSiyYaF : $@convention(thin) @async () -> Int // user: %79
-  %79 = apply %78() : $@convention(thin) @async () -> Int // user: %82
-  hop_to_executor %0                              // id: %80
-  %81 = alloc_stack $Int                          // users: %82, %87, %85
-  store %79 to %81                                // id: %82
-  %83 = begin_access [modify] [static] %11        // users: %86, %85
-  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
-  %84 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %85
-  %85 = apply %84<Int>(%81, %83) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
-  end_access %83                                  // id: %86
-  dealloc_stack %81                               // id: %87
-  %88 = string_literal utf8 " D="                 // user: %93
-  %89 = integer_literal $Builtin.Word, 3          // user: %93
-  %90 = integer_literal $Builtin.Int1, -1         // user: %93
-  %91 = metatype $@thin String.Type               // user: %93
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %92 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %93
-  %93 = apply %92(%88, %89, %90, %91) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %98, %96
-  %94 = begin_access [modify] [static] %11        // users: %97, %96
-  // function_ref DefaultStringInterpolation.appendLiteral(_:)
-  %95 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %96
-  %96 = apply %95(%93, %94) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-  end_access %94                                  // id: %97
-  release_value %93                               // id: %98
-  %99 = metatype $@thick ImmutableBox.Type        // user: %103
-  %100 = integer_literal $Builtin.Int64, 4        // user: %101
-  %101 = struct $Int (%100)                       // user: %103
-  // function_ref ImmutableBox.__allocating_init(_:)
-  %102 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %103
-  %103 = apply %102(%101, %99) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %106, %105
-  // function_ref caseD(_:)
-  %104 = function_ref @$s4main5caseDySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %105
-  %105 = apply %104(%103) : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int // user: %109
-  strong_release %103                             // id: %106
-  hop_to_executor %0                              // id: %107
-  %108 = alloc_stack $Int                         // users: %109, %114, %112
-  store %105 to %108                              // id: %109
-  %110 = begin_access [modify] [static] %11       // users: %113, %112
-  // function_ref DefaultStringInterpolation.appendInterpolation<A>(_:)
-  %111 = function_ref @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> () // user: %112
-  %112 = apply %111<Int>(%108, %110) : $@convention(method) <τ_0_0 where τ_0_0 : CustomStringConvertible> (@in_guaranteed τ_0_0, @inout DefaultStringInterpolation) -> ()
-  end_access %110                                 // id: %113
-  dealloc_stack %108                              // id: %114
-  %115 = string_literal utf8 ""                   // user: %120
-  %116 = integer_literal $Builtin.Word, 0         // user: %120
-  %117 = integer_literal $Builtin.Int1, -1        // user: %120
-  %118 = metatype $@thin String.Type              // user: %120
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %119 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %120
-  %120 = apply %119(%115, %116, %117, %118) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // users: %125, %123
-  %121 = begin_access [modify] [static] %11       // users: %124, %123
-  // function_ref DefaultStringInterpolation.appendLiteral(_:)
-  %122 = function_ref @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> () // user: %123
-  %123 = apply %122(%120, %121) : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-  end_access %121                                 // id: %124
-  release_value %120                              // id: %125
-  %126 = load %11                                 // users: %132, %127
-  retain_value %126                               // id: %127
-  destroy_addr %11                                // id: %128
-  dealloc_stack %11                               // id: %129
-  %130 = metatype $@thin String.Type              // user: %132
-  // function_ref String.init(stringInterpolation:)
-  %131 = function_ref @$sSS19stringInterpolationSSs013DefaultStringB0V_tcfC : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String // user: %132
-  %132 = apply %131(%126, %130) : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String // user: %134
-  %133 = init_existential_addr %10, $String       // user: %134
-  store %132 to %133                              // id: %134
-  // function_ref _finalizeUninitializedArray<A>(_:)
-  %135 = function_ref @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // user: %136
-  %136 = apply %135<Any>(%5) : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // users: %145, %142
-  // function_ref default argument 1 of print(_:separator:terminator:)
-  %137 = function_ref @$ss5print_9separator10terminatoryypd_S2StFfA0_ : $@convention(thin) () -> @owned String // user: %138
-  %138 = apply %137() : $@convention(thin) () -> @owned String // users: %144, %142
-  // function_ref default argument 2 of print(_:separator:terminator:)
-  %139 = function_ref @$ss5print_9separator10terminatoryypd_S2StFfA1_ : $@convention(thin) () -> @owned String // user: %140
-  %140 = apply %139() : $@convention(thin) () -> @owned String // users: %143, %142
-  // function_ref print(_:separator:terminator:)
-  %141 = function_ref @$ss5print_9separator10terminatoryypd_S2StF : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> () // user: %142
-  %142 = apply %141(%136, %138, %140) : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> ()
-  release_value %140                              // id: %143
-  release_value %138                              // id: %144
-  release_value %136                              // id: %145
-  %146 = tuple ()                                 // user: %147
-  return %146                                     // id: %147
-} // end sil function '$s4mainAAyyYaF'
-
-// @objc exit(_:)
-// Isolation: unspecified
-// clang name: exit
-sil [asmname "exit"] [clang exit] @$sSo4exitys5NeverOs5Int32VFTo : $@convention(c) (Int32) -> Never
-
-// ImmutableBox.value.getter
-// Isolation: unspecified
-sil hidden [transparent] @$s4main12ImmutableBoxC5valueSivg : $@convention(method) (@guaranteed ImmutableBox) -> Int {
-// %0 "self"                                      // users: %2, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = ref_element_addr [immutable] %0, #ImmutableBox.value // user: %3
-  %3 = load %2                                    // user: %4
-  return %3                                       // id: %4
-} // end sil function '$s4main12ImmutableBoxC5valueSivg'
-
-// ImmutableBox.__allocating_init(_:)
-// Isolation: unspecified
-sil hidden [exact_self_class] @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox {
-// %0 "value"                                     // user: %4
-// %1 "$metatype"
-bb0(%0 : $Int, %1 : $@thick ImmutableBox.Type):
-  %2 = alloc_ref $ImmutableBox                    // user: %4
-  // function_ref ImmutableBox.init(_:)
-  %3 = function_ref @$s4main12ImmutableBoxCyACSicfc : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox // user: %4
-  %4 = apply %3(%0, %2) : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox // user: %5
-  return %4                                       // id: %5
-} // end sil function '$s4main12ImmutableBoxCyACSicfC'
-
-// ImmutableBox.init(_:)
-// Isolation: unspecified
-sil hidden @$s4main12ImmutableBoxCyACSicfc : $@convention(method) (Int, @owned ImmutableBox) -> @owned ImmutableBox {
-// %0 "value"                                     // users: %5, %2
-// %1 "self"                                      // users: %4, %6, %3
-bb0(%0 : $Int, %1 : $ImmutableBox):
-  debug_value %0, let, name "value", argno 1      // id: %2
-  debug_value %1, let, name "self", argno 2       // id: %3
-  %4 = ref_element_addr %1, #ImmutableBox.value   // user: %5
-  store %0 to %4                                  // id: %5
-  %6 = end_init_let_ref %1                        // user: %7
-  return %6                                       // id: %7
-} // end sil function '$s4main12ImmutableBoxCyACSicfc'
-
-// ImmutableBox.deinit
-// Isolation: unspecified
-sil hidden @$s4main12ImmutableBoxCfd : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject {
-// %0 "self"                                      // users: %2, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %3
-  return %2                                       // id: %3
-} // end sil function '$s4main12ImmutableBoxCfd'
-
-// ImmutableBox.__deallocating_deinit
-// Isolation: nonisolated
-sil hidden @$s4main12ImmutableBoxCfD : $@convention(method) (@owned ImmutableBox) -> () {
-// %0 "self"                                      // users: %3, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  // function_ref ImmutableBox.deinit
-  %2 = function_ref @$s4main12ImmutableBoxCfd : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject // user: %3
-  %3 = apply %2(%0) : $@convention(method) (@guaranteed ImmutableBox) -> @owned Builtin.NativeObject // user: %4
-  %4 = unchecked_ref_cast %3 to $ImmutableBox     // user: %5
-  dealloc_ref %4                                  // id: %5
-  %6 = tuple ()                                   // user: %7
-  return %6                                       // id: %7
-} // end sil function '$s4main12ImmutableBoxCfD'
-
-// variable initialization expression of Holder.box
-// Isolation: unspecified
-sil hidden [transparent] @$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvpfi : $@convention(thin) () -> @owned ImmutableBox {
-bb0:
-  %0 = metatype $@thick ImmutableBox.Type         // user: %4
-  %1 = integer_literal $Builtin.Int64, 17         // user: %2
-  %2 = struct $Int (%1)                           // user: %4
-  // function_ref ImmutableBox.__allocating_init(_:)
-  %3 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %4
-  %4 = apply %3(%2, %0) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %5
-  return %4                                       // id: %5
-} // end sil function '$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvpfi'
 
 // Int.init(_builtinIntegerLiteral:)
 // Isolation: unspecified
@@ -384,157 +81,218 @@ bb0(%0 : $Builtin.IntLiteral, %1 : $@thin Int.Type):
   return %4                                       // id: %5
 } // end sil function '$sSi22_builtinIntegerLiteralSiBI_tcfC'
 
-// Holder.box.getter
-// Isolation: actor_instance. name: 'self'
-sil private [transparent] @$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvg : $@convention(method) (@sil_isolated @guaranteed Holder) -> @owned ImmutableBox {
-// %0 "self"                                      // users: %2, %1
-bb0(%0 : $Holder):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = ref_element_addr [immutable] %0, #Holder.box // user: %3
-  %3 = load %2                                    // users: %5, %4
-  strong_retain %3                                // id: %4
-  return %3                                       // id: %5
-} // end sil function '$s4main6HolderC3box029_12232F587A4C5CD8B1EEDF696793E2FCLLAA12ImmutableBoxCvg'
-
-// Holder.read()
-// Isolation: actor_instance. name: 'self'
-sil hidden @$s4main6HolderC4readSiyF : $@convention(method) (@sil_isolated @guaranteed Holder) -> Int {
-// %0 "self"                                      // users: %2, %1
-bb0(%0 : $Holder):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = ref_element_addr [immutable] %0, #Holder.box // user: %3
-  %3 = load %2                                    // users: %7, %5, %4
-  strong_retain %3                                // id: %4
-  %5 = ref_element_addr [immutable] %3, #ImmutableBox.value // user: %6
-  %6 = load %5                                    // user: %8
-  strong_release %3                               // id: %7
-  return %6                                       // id: %8
-} // end sil function '$s4main6HolderC4readSiyF'
-
-// Holder.deinit
+// SendableImmutableBox.__allocating_init(_:)
 // Isolation: unspecified
-sil hidden @$s4main6HolderCfd : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject {
-// %0 "self"                                      // users: %7, %6, %2, %1
-bb0(%0 : $Holder):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = ref_element_addr %0, #Holder.box           // user: %3
-  %3 = begin_access [deinit] [static] %2          // users: %5, %4
-  destroy_addr %3                                 // id: %4
-  end_access %3                                   // id: %5
-  %6 = builtin "destroyDefaultActor"(%0) : $()
-  %7 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %8
-  return %7                                       // id: %8
-} // end sil function '$s4main6HolderCfd'
+sil hidden [exact_self_class] @$s5Cases20SendableImmutableBoxCyACSicfC : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox {
+// %0 "value"                                     // user: %4
+// %1 "$metatype"
+bb0(%0 : $Int, %1 : $@thick SendableImmutableBox.Type):
+  %2 = alloc_ref $SendableImmutableBox            // user: %4
+  // function_ref SendableImmutableBox.init(_:)
+  %3 = function_ref @$s5Cases20SendableImmutableBoxCyACSicfc : $@convention(method) (Int, @owned SendableImmutableBox) -> @owned SendableImmutableBox // user: %4
+  %4 = apply %3(%0, %2) : $@convention(method) (Int, @owned SendableImmutableBox) -> @owned SendableImmutableBox // user: %5
+  return %4                                       // id: %5
+} // end sil function '$s5Cases20SendableImmutableBoxCyACSicfC'
 
-// Holder.__deallocating_deinit
-// Isolation: nonisolated
-sil hidden @$s4main6HolderCfD : $@convention(method) (@owned Holder) -> () {
-// %0 "self"                                      // users: %3, %1
-bb0(%0 : $Holder):
+// variable initialization expression of PlainMutableBox.value
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases15PlainMutableBoxC5valueSivpfi : $@convention(thin) () -> Int {
+bb0:
+  %0 = integer_literal $Builtin.Int64, 0          // user: %1
+  %1 = struct $Int (%0)                           // user: %2
+  return %1                                       // id: %2
+} // end sil function '$s5Cases15PlainMutableBoxC5valueSivpfi'
+
+// PlainMutableBox.value.getter
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases15PlainMutableBoxC5valueSivg : $@convention(method) (@guaranteed PlainMutableBox) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $PlainMutableBox):
   debug_value %0, let, name "self", argno 1       // id: %1
-  // function_ref Holder.deinit
-  %2 = function_ref @$s4main6HolderCfd : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject // user: %3
-  %3 = apply %2(%0) : $@convention(method) (@guaranteed Holder) -> @owned Builtin.NativeObject // user: %4
-  %4 = unchecked_ref_cast %3 to $Holder           // user: %5
+  %2 = ref_element_addr %0, #PlainMutableBox.value // user: %3
+  %3 = begin_access [read] [dynamic] %2           // users: %4, %5
+  %4 = load %3                                    // user: %6
+  end_access %3                                   // id: %5
+  return %4                                       // id: %6
+} // end sil function '$s5Cases15PlainMutableBoxC5valueSivg'
+
+// PlainMutableBox.value.setter
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases15PlainMutableBoxC5valueSivs : $@convention(method) (Int, @guaranteed PlainMutableBox) -> () {
+// %0 "value"                                     // users: %6, %2
+// %1 "self"                                      // users: %4, %3
+bb0(%0 : $Int, %1 : $PlainMutableBox):
+  debug_value %0, let, name "value", argno 1      // id: %2
+  debug_value %1, let, name "self", argno 2       // id: %3
+  %4 = ref_element_addr %1, #PlainMutableBox.value // user: %5
+  %5 = begin_access [modify] [dynamic] %4         // users: %6, %7
+  store %0 to %5                                  // id: %6
+  end_access %5                                   // id: %7
+  %8 = tuple ()                                   // user: %9
+  return %8                                       // id: %9
+} // end sil function '$s5Cases15PlainMutableBoxC5valueSivs'
+
+// PlainMutableBox.value.modify
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases15PlainMutableBoxC5valueSivM : $@yield_once @convention(method) (@guaranteed PlainMutableBox) -> @yields @inout Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $PlainMutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr %0, #PlainMutableBox.value // user: %3
+  %3 = begin_access [modify] [dynamic] %2         // users: %5, %8, %4
+  yield %3, resume bb1, unwind bb2                // id: %4
+
+bb1:                                              // Preds: bb0
+  end_access %3                                   // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+
+bb2:                                              // Preds: bb0
+  end_access %3                                   // id: %8
+  unwind                                          // id: %9
+} // end sil function '$s5Cases15PlainMutableBoxC5valueSivM'
+
+// PlainMutableBox.deinit
+// Isolation: unspecified
+sil hidden @$s5Cases15PlainMutableBoxCfd : $@convention(method) (@guaranteed PlainMutableBox) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $PlainMutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %3
+  return %2                                       // id: %3
+} // end sil function '$s5Cases15PlainMutableBoxCfd'
+
+// PlainMutableBox.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s5Cases15PlainMutableBoxCfD : $@convention(method) (@owned PlainMutableBox) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $PlainMutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref PlainMutableBox.deinit
+  %2 = function_ref @$s5Cases15PlainMutableBoxCfd : $@convention(method) (@guaranteed PlainMutableBox) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed PlainMutableBox) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $PlainMutableBox  // user: %5
   dealloc_ref %4                                  // id: %5
   %6 = tuple ()                                   // user: %7
   return %6                                       // id: %7
-} // end sil function '$s4main6HolderCfD'
+} // end sil function '$s5Cases15PlainMutableBoxCfD'
 
-// Holder.__allocating_init()
-// Isolation: nonisolated
-sil hidden [exact_self_class] @$s4main6HolderCACycfC : $@convention(method) (@thick Holder.Type) -> @owned Holder {
+// PlainMutableBox.__allocating_init()
+// Isolation: unspecified
+sil hidden [exact_self_class] @$s5Cases15PlainMutableBoxCACycfC : $@convention(method) (@thick PlainMutableBox.Type) -> @owned PlainMutableBox {
 // %0 "$metatype"
-bb0(%0 : $@thick Holder.Type):
-  %1 = alloc_ref $Holder                          // user: %3
-  // function_ref Holder.init()
-  %2 = function_ref @$s4main6HolderCACycfc : $@convention(method) (@owned Holder) -> @owned Holder // user: %3
-  %3 = apply %2(%1) : $@convention(method) (@owned Holder) -> @owned Holder // user: %4
+bb0(%0 : $@thick PlainMutableBox.Type):
+  %1 = alloc_ref $PlainMutableBox                 // user: %3
+  // function_ref PlainMutableBox.init()
+  %2 = function_ref @$s5Cases15PlainMutableBoxCACycfc : $@convention(method) (@owned PlainMutableBox) -> @owned PlainMutableBox // user: %3
+  %3 = apply %2(%1) : $@convention(method) (@owned PlainMutableBox) -> @owned PlainMutableBox // user: %4
   return %3                                       // id: %4
-} // end sil function '$s4main6HolderCACycfC'
+} // end sil function '$s5Cases15PlainMutableBoxCACycfC'
 
-// Holder.init()
-// Isolation: nonisolated
-sil hidden @$s4main6HolderCACycfc : $@convention(method) (@owned Holder) -> @owned Holder {
-// %0 "self"                                      // users: %3, %10, %2, %1
-bb0(%0 : $Holder):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = builtin "initializeDefaultActor"(%0) : $()
-  %3 = ref_element_addr %0, #Holder.box           // user: %9
-  %4 = metatype $@thick ImmutableBox.Type         // user: %8
-  %5 = integer_literal $Builtin.Int64, 17         // user: %6
-  %6 = struct $Int (%5)                           // user: %8
-  // function_ref ImmutableBox.__allocating_init(_:)
-  %7 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %8
-  %8 = apply %7(%6, %4) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %9
-  store %8 to %3                                  // id: %9
-  %10 = end_init_let_ref %0                       // user: %11
-  return %10                                      // id: %11
-} // end sil function '$s4main6HolderCACycfc'
-
-// Holder.unownedExecutor.getter
-// Isolation: nonisolated
-sil hidden [available 10.15] [_semantics "defaultActor"] @$s4main6HolderC15unownedExecutorScevg : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor {
-// %0 "self"                                      // users: %3, %1
-bb0(%0 : $Holder):
-  debug_value %0, let, name "self", argno 1       // id: %1
-  %2 = metatype $@thin UnownedSerialExecutor.Type // user: %5
-  %3 = builtin "buildDefaultActorExecutorRef"<Holder>(%0) : $Builtin.Executor // user: %5
-  // function_ref UnownedSerialExecutor.init(_:)
-  %4 = function_ref @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %5
-  %5 = apply %4(%3, %2) : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %6
-  return %5                                       // id: %6
-} // end sil function '$s4main6HolderC15unownedExecutorScevg'
-
-// UnownedSerialExecutor.init(_:)
+// PlainMutableBox.init()
 // Isolation: unspecified
-sil [available 12.0.0] @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor
+sil hidden @$s5Cases15PlainMutableBoxCACycfc : $@convention(method) (@owned PlainMutableBox) -> @owned PlainMutableBox {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $PlainMutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = end_init_let_ref %0                        // users: %3, %7
+  %3 = ref_element_addr %2, #PlainMutableBox.value // user: %6
+  %4 = integer_literal $Builtin.Int64, 0          // user: %5
+  %5 = struct $Int (%4)                           // user: %6
+  store %5 to %3                                  // id: %6
+  return %2                                       // id: %7
+} // end sil function '$s5Cases15PlainMutableBoxCACycfc'
 
-// protocol witness for Actor.unownedExecutor.getter in conformance Holder
-// Isolation: nonisolated
-sil private [transparent] [thunk] @$s4main6HolderCScAAAScA15unownedExecutorScevgTW : $@convention(witness_method: Actor) (@guaranteed Holder) -> UnownedSerialExecutor {
-// %0                                             // user: %2
-bb0(%0 : $Holder):
-  // function_ref Holder.unownedExecutor.getter
-  %1 = function_ref @$s4main6HolderC15unownedExecutorScevg : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor // user: %2
-  %2 = apply %1(%0) : $@convention(method) (@guaranteed Holder) -> UnownedSerialExecutor // user: %3
+// SendableImmutableBox.value.getter
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases20SendableImmutableBoxC5valueSivg : $@convention(method) (@guaranteed SendableImmutableBox) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #SendableImmutableBox.value // user: %3
+  %3 = load %2                                    // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s5Cases20SendableImmutableBoxC5valueSivg'
+
+// SendableImmutableBox.init(_:)
+// Isolation: unspecified
+sil hidden @$s5Cases20SendableImmutableBoxCyACSicfc : $@convention(method) (Int, @owned SendableImmutableBox) -> @owned SendableImmutableBox {
+// %0 "value"                                     // users: %5, %2
+// %1 "self"                                      // users: %4, %6, %3
+bb0(%0 : $Int, %1 : $SendableImmutableBox):
+  debug_value %0, let, name "value", argno 1      // id: %2
+  debug_value %1, let, name "self", argno 2       // id: %3
+  %4 = ref_element_addr %1, #SendableImmutableBox.value // user: %5
+  store %0 to %4                                  // id: %5
+  %6 = end_init_let_ref %1                        // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s5Cases20SendableImmutableBoxCyACSicfc'
+
+// SendableImmutableBox.deinit
+// Isolation: unspecified
+sil hidden @$s5Cases20SendableImmutableBoxCfd : $@convention(method) (@guaranteed SendableImmutableBox) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %3
   return %2                                       // id: %3
-} // end sil function '$s4main6HolderCScAAAScA15unownedExecutorScevgTW'
+} // end sil function '$s5Cases20SendableImmutableBoxCfd'
 
-// caseA()
+// SendableImmutableBox.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s5Cases20SendableImmutableBoxCfD : $@convention(method) (@owned SendableImmutableBox) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref SendableImmutableBox.deinit
+  %2 = function_ref @$s5Cases20SendableImmutableBoxCfd : $@convention(method) (@guaranteed SendableImmutableBox) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed SendableImmutableBox) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $SendableImmutableBox // user: %5
+  dealloc_ref %4                                  // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s5Cases20SendableImmutableBoxCfD'
+
+// caseA_local()
 // Isolation: unspecified
-sil hidden @$s4main5caseASiyF : $@convention(thin) () -> Int {
+sil hidden @$s5Cases11caseA_localSiyF : $@convention(thin) () -> Int {
 bb0:
-  %0 = metatype $@thick ImmutableBox.Type         // user: %4
-  %1 = integer_literal $Builtin.Int64, 1          // user: %2
-  %2 = struct $Int (%1)                           // user: %4
-  // function_ref ImmutableBox.__allocating_init(_:)
-  %3 = function_ref @$s4main12ImmutableBoxCyACSicfC : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // user: %4
-  %4 = apply %3(%2, %0) : $@convention(method) (Int, @thick ImmutableBox.Type) -> @owned ImmutableBox // users: %8, %6, %5
-  debug_value %4, let, name "box"                 // id: %5
-  %6 = ref_element_addr [immutable] %4, #ImmutableBox.value // user: %7
-  %7 = load %6                                    // user: %9
-  strong_release %4                               // id: %8
-  return %7                                       // id: %9
-} // end sil function '$s4main5caseASiyF'
+  %0 = metatype $@thick PlainMutableBox.Type      // user: %2
+  // function_ref PlainMutableBox.__allocating_init()
+  %1 = function_ref @$s5Cases15PlainMutableBoxCACycfC : $@convention(method) (@thick PlainMutableBox.Type) -> @owned PlainMutableBox // user: %2
+  %2 = apply %1(%0) : $@convention(method) (@thick PlainMutableBox.Type) -> @owned PlainMutableBox // users: %14, %10, %6, %3
+  debug_value %2, let, name "x"                   // id: %3
+  %4 = integer_literal $Builtin.Int64, 1          // user: %5
+  %5 = struct $Int (%4)                           // user: %8
+  %6 = ref_element_addr %2, #PlainMutableBox.value // user: %7
+  %7 = begin_access [modify] [dynamic] %6         // users: %8, %9
+  store %5 to %7                                  // id: %8
+  end_access %7                                   // id: %9
+  %10 = ref_element_addr %2, #PlainMutableBox.value // user: %11
+  %11 = begin_access [read] [dynamic] %10         // users: %12, %13
+  %12 = load %11                                  // user: %15
+  end_access %11                                  // id: %13
+  strong_release %2                               // id: %14
+  return %12                                      // id: %15
+} // end sil function '$s5Cases11caseA_localSiyF'
 
-// caseB(_:)
+// caseB_sendable(_:)
 // Isolation: unspecified
-sil hidden @$s4main5caseBySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int {
-// %0 "box"                                       // users: %11, %9, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "box", argno 1        // id: %1
+sil hidden @$s5Cases14caseB_sendableySiAA20SendableImmutableBoxCYaF : $@convention(thin) @async (@guaranteed SendableImmutableBox) -> Int {
+// %0 "x"                                         // users: %11, %9, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
   %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %20, %3
   hop_to_executor %2                              // id: %3
   %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
   %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
   %6 = alloc_stack $Optional<TaskPriority>        // users: %15, %14, %13, %7
   inject_enum_addr %6, #Optional.none!enumelt     // id: %7
-  // function_ref closure #1 in caseB(_:)
-  %8 = function_ref @$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %11
+  // function_ref closure #1 in caseB_sendable(_:)
+  %8 = function_ref @$s5Cases14caseB_sendableySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %11
   strong_retain %0                                // id: %9
   %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
-  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %13
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %13
   // function_ref static Task<>.detached(name:priority:operation:)
   %12 = function_ref @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZ : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
   %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %19, %18
@@ -549,23 +307,23 @@ bb0(%0 : $ImmutableBox):
   %21 = load %16                                  // user: %23
   dealloc_stack %16                               // id: %22
   return %21                                      // id: %23
-} // end sil function '$s4main5caseBySiAA12ImmutableBoxCYaF'
+} // end sil function '$s5Cases14caseB_sendableySiAA20SendableImmutableBoxCYaF'
 
-// closure #1 in caseB(_:)
+// closure #1 in caseB_sendable(_:)
 // Isolation: nonisolated
-sil private @$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> {
+sil private @$s5Cases14caseB_sendableySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> {
 // %0 "$return_value"                             // user: %8
-// %2 "box"                                       // users: %6, %3
-bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $ImmutableBox):
-  debug_value %2, let, name "box", argno 1        // id: %3
+// %2 "x"                                         // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $SendableImmutableBox):
+  debug_value %2, let, name "x", argno 1          // id: %3
   %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
   hop_to_executor %4                              // id: %5
-  %6 = ref_element_addr [immutable] %2, #ImmutableBox.value // user: %7
+  %6 = ref_element_addr [immutable] %2, #SendableImmutableBox.value // user: %7
   %7 = load %6                                    // user: %8
   store %7 to %0                                  // id: %8
   %9 = tuple ()                                   // user: %10
   return %9                                       // id: %10
-} // end sil function '$s4main5caseBySiAA12ImmutableBoxCYaFSiyYacfU_'
+} // end sil function '$s5Cases14caseB_sendableySiAA20SendableImmutableBoxCYaFSiyYacfU_'
 
 // static Task<>.detached(name:priority:operation:)
 // Isolation: unspecified
@@ -618,9 +376,9 @@ bb4:                                              // Preds: bb3
 
 // %31                                            // user: %32
 bb5(%31 : $any Actor):                            // Preds: bb3
-  %32 = open_existential_ref %31 to $@opened("494F043E-B216-11F1-8336-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
-  %33 = witness_method $@opened("494F043E-B216-11F1-8336-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("494F043E-B216-11F1-8336-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
-  %34 = apply %33<@opened("494F043E-B216-11F1-8336-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  %32 = open_existential_ref %31 to $@opened("499B1AA4-B216-11F1-8715-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("499B1AA4-B216-11F1-8715-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("499B1AA4-B216-11F1-8715-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("499B1AA4-B216-11F1-8715-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
   strong_release %32                              // id: %35
   %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
   %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38
@@ -740,40 +498,153 @@ bb16(%117 : $Builtin.NativeObject):               // Preds: bb15 bb12
 // Isolation: unspecified
 sil [available 12.0.0] @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
 
-// caseC()
+// variable initialization expression of CaseCActor.x
 // Isolation: unspecified
-sil hidden @$s4main5caseCSiyYaF : $@convention(thin) @async () -> Int {
+sil hidden [transparent] @$s5Cases10CaseCActorC1xAA20SendableImmutableBoxCvpfi : $@convention(thin) () -> @owned SendableImmutableBox {
 bb0:
-  %0 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %1
-  hop_to_executor %0                              // id: %1
-  %2 = metatype $@thick Holder.Type               // user: %4
-  // function_ref Holder.__allocating_init()
-  %3 = function_ref @$s4main6HolderCACycfC : $@convention(method) (@thick Holder.Type) -> @owned Holder // user: %4
-  %4 = apply %3(%2) : $@convention(method) (@thick Holder.Type) -> @owned Holder // users: %8, %6, %7, %5
-  %5 = class_method %4, #Holder.read : (isolated Holder) -> () -> Int, $@convention(method) (@sil_isolated @guaranteed Holder) -> Int // user: %7
-  hop_to_executor %4                              // id: %6
-  %7 = apply %5(%4) : $@convention(method) (@sil_isolated @guaranteed Holder) -> Int // user: %9
-  strong_release %4                               // id: %8
-  return %7                                       // id: %9
-} // end sil function '$s4main5caseCSiyYaF'
+  %0 = metatype $@thick SendableImmutableBox.Type // user: %4
+  %1 = integer_literal $Builtin.Int64, 3          // user: %2
+  %2 = struct $Int (%1)                           // user: %4
+  // function_ref SendableImmutableBox.__allocating_init(_:)
+  %3 = function_ref @$s5Cases20SendableImmutableBoxCyACSicfC : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %4
+  %4 = apply %3(%2, %0) : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %5
+  return %4                                       // id: %5
+} // end sil function '$s5Cases10CaseCActorC1xAA20SendableImmutableBoxCvpfi'
 
-// caseD(_:)
+// CaseCActor.x.getter
+// Isolation: actor_instance. name: 'self'
+sil hidden [transparent] @$s5Cases10CaseCActorC1xAA20SendableImmutableBoxCvg : $@convention(method) (@sil_isolated @guaranteed CaseCActor) -> @owned SendableImmutableBox {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #CaseCActor.x // user: %3
+  %3 = load %2                                    // users: %5, %4
+  strong_retain %3                                // id: %4
+  return %3                                       // id: %5
+} // end sil function '$s5Cases10CaseCActorC1xAA20SendableImmutableBoxCvg'
+
+// CaseCActor.read()
+// Isolation: actor_instance. name: 'self'
+sil hidden @$s5Cases10CaseCActorC4readSiyF : $@convention(method) (@sil_isolated @guaranteed CaseCActor) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr [immutable] %0, #CaseCActor.x // user: %3
+  %3 = load %2                                    // users: %7, %5, %4
+  strong_retain %3                                // id: %4
+  %5 = ref_element_addr [immutable] %3, #SendableImmutableBox.value // user: %6
+  %6 = load %5                                    // user: %8
+  strong_release %3                               // id: %7
+  return %6                                       // id: %8
+} // end sil function '$s5Cases10CaseCActorC4readSiyF'
+
+// CaseCActor.deinit
 // Isolation: unspecified
-sil hidden @$s4main5caseDySiAA12ImmutableBoxCYaF : $@convention(thin) @async (@guaranteed ImmutableBox) -> Int {
-// %0 "box"                                       // users: %11, %9, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "box", argno 1        // id: %1
+sil hidden @$s5Cases10CaseCActorCfd : $@convention(method) (@guaranteed CaseCActor) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %7, %6, %2, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr %0, #CaseCActor.x         // user: %3
+  %3 = begin_access [deinit] [static] %2          // users: %5, %4
+  destroy_addr %3                                 // id: %4
+  end_access %3                                   // id: %5
+  %6 = builtin "destroyDefaultActor"(%0) : $()
+  %7 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %8
+  return %7                                       // id: %8
+} // end sil function '$s5Cases10CaseCActorCfd'
+
+// CaseCActor.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s5Cases10CaseCActorCfD : $@convention(method) (@owned CaseCActor) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref CaseCActor.deinit
+  %2 = function_ref @$s5Cases10CaseCActorCfd : $@convention(method) (@guaranteed CaseCActor) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed CaseCActor) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $CaseCActor       // user: %5
+  dealloc_ref %4                                  // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s5Cases10CaseCActorCfD'
+
+// CaseCActor.__allocating_init()
+// Isolation: nonisolated
+sil hidden [exact_self_class] @$s5Cases10CaseCActorCACycfC : $@convention(method) (@thick CaseCActor.Type) -> @owned CaseCActor {
+// %0 "$metatype"
+bb0(%0 : $@thick CaseCActor.Type):
+  %1 = alloc_ref $CaseCActor                      // user: %3
+  // function_ref CaseCActor.init()
+  %2 = function_ref @$s5Cases10CaseCActorCACycfc : $@convention(method) (@owned CaseCActor) -> @owned CaseCActor // user: %3
+  %3 = apply %2(%1) : $@convention(method) (@owned CaseCActor) -> @owned CaseCActor // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s5Cases10CaseCActorCACycfC'
+
+// CaseCActor.init()
+// Isolation: nonisolated
+sil hidden @$s5Cases10CaseCActorCACycfc : $@convention(method) (@owned CaseCActor) -> @owned CaseCActor {
+// %0 "self"                                      // users: %3, %10, %2, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = builtin "initializeDefaultActor"(%0) : $()
+  %3 = ref_element_addr %0, #CaseCActor.x         // user: %9
+  %4 = metatype $@thick SendableImmutableBox.Type // user: %8
+  %5 = integer_literal $Builtin.Int64, 3          // user: %6
+  %6 = struct $Int (%5)                           // user: %8
+  // function_ref SendableImmutableBox.__allocating_init(_:)
+  %7 = function_ref @$s5Cases20SendableImmutableBoxCyACSicfC : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %8
+  %8 = apply %7(%6, %4) : $@convention(method) (Int, @thick SendableImmutableBox.Type) -> @owned SendableImmutableBox // user: %9
+  store %8 to %3                                  // id: %9
+  %10 = end_init_let_ref %0                       // user: %11
+  return %10                                      // id: %11
+} // end sil function '$s5Cases10CaseCActorCACycfc'
+
+// CaseCActor.unownedExecutor.getter
+// Isolation: nonisolated
+sil hidden [available 10.15] [_semantics "defaultActor"] @$s5Cases10CaseCActorC15unownedExecutorScevg : $@convention(method) (@guaranteed CaseCActor) -> UnownedSerialExecutor {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $CaseCActor):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = metatype $@thin UnownedSerialExecutor.Type // user: %5
+  %3 = builtin "buildDefaultActorExecutorRef"<CaseCActor>(%0) : $Builtin.Executor // user: %5
+  // function_ref UnownedSerialExecutor.init(_:)
+  %4 = function_ref @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %5
+  %5 = apply %4(%3, %2) : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor // user: %6
+  return %5                                       // id: %6
+} // end sil function '$s5Cases10CaseCActorC15unownedExecutorScevg'
+
+// UnownedSerialExecutor.init(_:)
+// Isolation: unspecified
+sil [available 12.0.0] @$sSceySceBecfC : $@convention(method) (Builtin.Executor, @thin UnownedSerialExecutor.Type) -> UnownedSerialExecutor
+
+// protocol witness for Actor.unownedExecutor.getter in conformance CaseCActor
+// Isolation: nonisolated
+sil private [transparent] [thunk] @$s5Cases10CaseCActorCScAAAScA15unownedExecutorScevgTW : $@convention(witness_method: Actor) (@guaranteed CaseCActor) -> UnownedSerialExecutor {
+// %0                                             // user: %2
+bb0(%0 : $CaseCActor):
+  // function_ref CaseCActor.unownedExecutor.getter
+  %1 = function_ref @$s5Cases10CaseCActorC15unownedExecutorScevg : $@convention(method) (@guaranteed CaseCActor) -> UnownedSerialExecutor // user: %2
+  %2 = apply %1(%0) : $@convention(method) (@guaranteed CaseCActor) -> UnownedSerialExecutor // user: %3
+  return %2                                       // id: %3
+} // end sil function '$s5Cases10CaseCActorCScAAAScA15unownedExecutorScevgTW'
+
+// caseD_crossing(_:)
+// Isolation: unspecified
+sil hidden @$s5Cases14caseD_crossingySiAA20SendableImmutableBoxCYaF : $@convention(thin) @async (@guaranteed SendableImmutableBox) -> Int {
+// %0 "x"                                         // users: %11, %9, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
   %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %19, %3
   hop_to_executor %2                              // id: %3
   %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
   %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
   %6 = alloc_stack $Optional<TaskPriority>        // users: %14, %13, %7
   inject_enum_addr %6, #Optional.none!enumelt     // id: %7
-  // function_ref closure #1 in caseD(_:)
-  %8 = function_ref @$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %11
+  // function_ref closure #1 in caseD_crossing(_:)
+  %8 = function_ref @$s5Cases14caseD_crossingySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %11
   strong_retain %0                                // id: %9
   %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
-  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> // user: %13
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %13
   // function_ref Task<>.init(name:priority:operation:)
   %12 = function_ref @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
   %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %18, %17
@@ -787,23 +658,23 @@ bb0(%0 : $ImmutableBox):
   %20 = load %15                                  // user: %22
   dealloc_stack %15                               // id: %21
   return %20                                      // id: %22
-} // end sil function '$s4main5caseDySiAA12ImmutableBoxCYaF'
+} // end sil function '$s5Cases14caseD_crossingySiAA20SendableImmutableBoxCYaF'
 
-// closure #1 in caseD(_:)
+// closure #1 in caseD_crossing(_:)
 // Isolation: nonisolated
-sil private @$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed ImmutableBox) -> @out τ_0_0 for <Int> {
+sil private @$s5Cases14caseD_crossingySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> {
 // %0 "$return_value"                             // user: %8
-// %2 "box"                                       // users: %6, %3
-bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $ImmutableBox):
-  debug_value %2, let, name "box", argno 1        // id: %3
+// %2 "x"                                         // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $SendableImmutableBox):
+  debug_value %2, let, name "x", argno 1          // id: %3
   %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
   hop_to_executor %4                              // id: %5
-  %6 = ref_element_addr [immutable] %2, #ImmutableBox.value // user: %7
+  %6 = ref_element_addr [immutable] %2, #SendableImmutableBox.value // user: %7
   %7 = load %6                                    // user: %8
   store %7 to %0                                  // id: %8
   %9 = tuple ()                                   // user: %10
   return %9                                       // id: %10
-} // end sil function '$s4main5caseDySiAA12ImmutableBoxCYaFSiyYacfU_'
+} // end sil function '$s5Cases14caseD_crossingySiAA20SendableImmutableBoxCYaFSiyYacfU_'
 
 // Task<>.init(name:priority:operation:)
 // Isolation: unspecified
@@ -855,9 +726,9 @@ bb4:                                              // Preds: bb3
 
 // %31                                            // user: %32
 bb5(%31 : $any Actor):                            // Preds: bb3
-  %32 = open_existential_ref %31 to $@opened("494F30DA-B216-11F1-8336-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
-  %33 = witness_method $@opened("494F30DA-B216-11F1-8336-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("494F30DA-B216-11F1-8336-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
-  %34 = apply %33<@opened("494F30DA-B216-11F1-8336-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  %32 = open_existential_ref %31 to $@opened("499B4E02-B216-11F1-8715-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("499B4E02-B216-11F1-8715-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("499B4E02-B216-11F1-8715-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("499B4E02-B216-11F1-8715-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
   strong_release %32                              // id: %35
   %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
   %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38
@@ -974,109 +845,279 @@ bb16(%120 : $Builtin.NativeObject):               // Preds: bb15 bb12
   return %121                                     // id: %124
 } // end sil function '$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC'
 
-// caseE(_:)
-// Isolation: global_actor. type: MainActor
-sil hidden @$s4main5caseEySiAA12ImmutableBoxCF : $@convention(thin) (@guaranteed ImmutableBox) -> Int {
-// %0 "box"                                       // users: %2, %1
-bb0(%0 : $ImmutableBox):
-  debug_value %0, let, name "box", argno 1        // id: %1
-  %2 = ref_element_addr [immutable] %0, #ImmutableBox.value // user: %3
-  %3 = load %2                                    // user: %4
+// variable initialization expression of UncheckedBox.value
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases12UncheckedBoxC5valueSivpfi : $@convention(thin) () -> Int {
+bb0:
+  %0 = integer_literal $Builtin.Int64, 4          // user: %1
+  %1 = struct $Int (%0)                           // user: %2
+  return %1                                       // id: %2
+} // end sil function '$s5Cases12UncheckedBoxC5valueSivpfi'
+
+// UncheckedBox.value.getter
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases12UncheckedBoxC5valueSivg : $@convention(method) (@guaranteed UncheckedBox) -> Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr %0, #UncheckedBox.value   // user: %3
+  %3 = begin_access [read] [dynamic] %2           // users: %4, %5
+  %4 = load %3                                    // user: %6
+  end_access %3                                   // id: %5
+  return %4                                       // id: %6
+} // end sil function '$s5Cases12UncheckedBoxC5valueSivg'
+
+// UncheckedBox.value.setter
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases12UncheckedBoxC5valueSivs : $@convention(method) (Int, @guaranteed UncheckedBox) -> () {
+// %0 "value"                                     // users: %6, %2
+// %1 "self"                                      // users: %4, %3
+bb0(%0 : $Int, %1 : $UncheckedBox):
+  debug_value %0, let, name "value", argno 1      // id: %2
+  debug_value %1, let, name "self", argno 2       // id: %3
+  %4 = ref_element_addr %1, #UncheckedBox.value   // user: %5
+  %5 = begin_access [modify] [dynamic] %4         // users: %6, %7
+  store %0 to %5                                  // id: %6
+  end_access %5                                   // id: %7
+  %8 = tuple ()                                   // user: %9
+  return %8                                       // id: %9
+} // end sil function '$s5Cases12UncheckedBoxC5valueSivs'
+
+// UncheckedBox.value.modify
+// Isolation: unspecified
+sil hidden [transparent] @$s5Cases12UncheckedBoxC5valueSivM : $@yield_once @convention(method) (@guaranteed UncheckedBox) -> @yields @inout Int {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = ref_element_addr %0, #UncheckedBox.value   // user: %3
+  %3 = begin_access [modify] [dynamic] %2         // users: %5, %8, %4
+  yield %3, resume bb1, unwind bb2                // id: %4
+
+bb1:                                              // Preds: bb0
+  end_access %3                                   // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+
+bb2:                                              // Preds: bb0
+  end_access %3                                   // id: %8
+  unwind                                          // id: %9
+} // end sil function '$s5Cases12UncheckedBoxC5valueSivM'
+
+// UncheckedBox.deinit
+// Isolation: unspecified
+sil hidden @$s5Cases12UncheckedBoxCfd : $@convention(method) (@guaranteed UncheckedBox) -> @owned Builtin.NativeObject {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = unchecked_ref_cast %0 to $Builtin.NativeObject // user: %3
+  return %2                                       // id: %3
+} // end sil function '$s5Cases12UncheckedBoxCfd'
+
+// UncheckedBox.__deallocating_deinit
+// Isolation: nonisolated
+sil hidden @$s5Cases12UncheckedBoxCfD : $@convention(method) (@owned UncheckedBox) -> () {
+// %0 "self"                                      // users: %3, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  // function_ref UncheckedBox.deinit
+  %2 = function_ref @$s5Cases12UncheckedBoxCfd : $@convention(method) (@guaranteed UncheckedBox) -> @owned Builtin.NativeObject // user: %3
+  %3 = apply %2(%0) : $@convention(method) (@guaranteed UncheckedBox) -> @owned Builtin.NativeObject // user: %4
+  %4 = unchecked_ref_cast %3 to $UncheckedBox     // user: %5
+  dealloc_ref %4                                  // id: %5
+  %6 = tuple ()                                   // user: %7
+  return %6                                       // id: %7
+} // end sil function '$s5Cases12UncheckedBoxCfD'
+
+// UncheckedBox.__allocating_init()
+// Isolation: unspecified
+sil hidden [exact_self_class] @$s5Cases12UncheckedBoxCACycfC : $@convention(method) (@thick UncheckedBox.Type) -> @owned UncheckedBox {
+// %0 "$metatype"
+bb0(%0 : $@thick UncheckedBox.Type):
+  %1 = alloc_ref $UncheckedBox                    // user: %3
+  // function_ref UncheckedBox.init()
+  %2 = function_ref @$s5Cases12UncheckedBoxCACycfc : $@convention(method) (@owned UncheckedBox) -> @owned UncheckedBox // user: %3
+  %3 = apply %2(%1) : $@convention(method) (@owned UncheckedBox) -> @owned UncheckedBox // user: %4
   return %3                                       // id: %4
-} // end sil function '$s4main5caseEySiAA12ImmutableBoxCF'
+} // end sil function '$s5Cases12UncheckedBoxCACycfC'
 
-// _allocateUninitializedArray<A>(_:)
+// UncheckedBox.init()
 // Isolation: unspecified
-sil [heuristic_always_inline] [_semantics "array.uninitialized_intrinsic"] @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <Element> (Builtin.Word) -> (@owned Array<Element>, Builtin.RawPointer)
+sil hidden @$s5Cases12UncheckedBoxCACycfc : $@convention(method) (@owned UncheckedBox) -> @owned UncheckedBox {
+// %0 "self"                                      // users: %2, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = end_init_let_ref %0                        // users: %3, %7
+  %3 = ref_element_addr %2, #UncheckedBox.value   // user: %6
+  %4 = integer_literal $Builtin.Int64, 4          // user: %5
+  %5 = struct $Int (%4)                           // user: %6
+  store %5 to %3                                  // id: %6
+  return %2                                       // id: %7
+} // end sil function '$s5Cases12UncheckedBoxCACycfc'
 
-// DefaultStringInterpolation.init(literalCapacity:interpolationCount:)
+// caseE_unchecked(_:)
 // Isolation: unspecified
-sil @$ss26DefaultStringInterpolationV15literalCapacity18interpolationCountABSi_SitcfC : $@convention(method) (Int, Int, @thin DefaultStringInterpolation.Type) -> @owned DefaultStringInterpolation
+sil hidden @$s5Cases15caseE_uncheckedySiAA12UncheckedBoxCYaF : $@convention(thin) @async (@guaranteed UncheckedBox) -> Int {
+// %0 "x"                                         // users: %11, %9, %1
+bb0(%0 : $UncheckedBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
+  %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %20, %3
+  hop_to_executor %2                              // id: %3
+  %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
+  %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
+  %6 = alloc_stack $Optional<TaskPriority>        // users: %15, %14, %13, %7
+  inject_enum_addr %6, #Optional.none!enumelt     // id: %7
+  // function_ref closure #1 in caseE_unchecked(_:)
+  %8 = function_ref @$s5Cases15caseE_uncheckedySiAA12UncheckedBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed UncheckedBox) -> @out τ_0_0 for <Int> // user: %11
+  strong_retain %0                                // id: %9
+  %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed UncheckedBox) -> @out τ_0_0 for <Int> // user: %13
+  // function_ref static Task<>.detached(name:priority:operation:)
+  %12 = function_ref @$sScTss5NeverORs_rlE8detached4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntFZ : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
+  %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Optional<String>, @in_guaranteed Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %19, %18
+  destroy_addr %6                                 // id: %14
+  dealloc_stack %6                                // id: %15
+  %16 = alloc_stack $Int                          // users: %21, %22, %18
+  // function_ref Task<>.value.getter
+  %17 = function_ref @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0 // user: %18
+  %18 = apply %17<Int, Never>(%16, %13) : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
+  release_value %13                               // id: %19
+  hop_to_executor %2                              // id: %20
+  %21 = load %16                                  // user: %23
+  dealloc_stack %16                               // id: %22
+  return %21                                      // id: %23
+} // end sil function '$s5Cases15caseE_uncheckedySiAA12UncheckedBoxCYaF'
 
-// String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-// Isolation: unspecified
-sil [heuristic_always_inline] [readonly] [_semantics "string.makeUTF8"] @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String
-
-// DefaultStringInterpolation.appendLiteral(_:)
-// Isolation: unspecified
-sil @$ss26DefaultStringInterpolationV13appendLiteralyySSF : $@convention(method) (@guaranteed String, @inout DefaultStringInterpolation) -> ()
-
-// DefaultStringInterpolation.appendInterpolation<A>(_:)
-// Isolation: unspecified
-sil @$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF : $@convention(method) <T where T : CustomStringConvertible> (@in_guaranteed T, @inout DefaultStringInterpolation) -> ()
-
-// String.init(stringInterpolation:)
-// Isolation: unspecified
-sil [readonly] @$sSS19stringInterpolationSSs013DefaultStringB0V_tcfC : $@convention(method) (@owned DefaultStringInterpolation, @thin String.Type) -> @owned String
-
-// _finalizeUninitializedArray<A>(_:)
-// Isolation: unspecified
-sil shared [readnone] [_semantics "array.finalize_intrinsic"] @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <Element> (@owned Array<Element>) -> @owned Array<Element> {
-[%0: escape! v** => %r.v**, escape! v**.c*.v** => %r.v**.c*.v**]
-// %0                                             // user: %2
-bb0(%0 : $Array<Element>):
-  %1 = alloc_stack [var_decl] $Array<Element>     // users: %5, %2, %6, %4
-  store %0 to %1                                  // id: %2
-  // function_ref Array._endMutation()
-  %3 = function_ref @$sSa12_endMutationyyF : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> () // user: %4
-  %4 = apply %3<Element>(%1) : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> ()
-  %5 = load %1                                    // user: %7
-  dealloc_stack %1                                // id: %6
-  return %5                                       // id: %7
-} // end sil function '$ss27_finalizeUninitializedArrayySayxGABnlF'
-
-// default argument 1 of print(_:separator:terminator:)
-// Isolation: unspecified
-sil shared @$ss5print_9separator10terminatoryypd_S2StFfA0_ : $@convention(thin) () -> @owned String {
-[global: read,copy,deinit_barrier]
-bb0:
-  %0 = string_literal utf8 " "                    // user: %5
-  %1 = integer_literal $Builtin.Word, 1           // user: %5
-  %2 = integer_literal $Builtin.Int1, -1          // user: %5
-  %3 = metatype $@thin String.Type                // user: %5
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %4 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %5
-  %5 = apply %4(%0, %1, %2, %3) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %6
-  return %5                                       // id: %6
-} // end sil function '$ss5print_9separator10terminatoryypd_S2StFfA0_'
-
-// default argument 2 of print(_:separator:terminator:)
-// Isolation: unspecified
-sil shared @$ss5print_9separator10terminatoryypd_S2StFfA1_ : $@convention(thin) () -> @owned String {
-[global: read,copy,deinit_barrier]
-bb0:
-  %0 = string_literal utf8 "\n"                   // user: %5
-  %1 = integer_literal $Builtin.Word, 1           // user: %5
-  %2 = integer_literal $Builtin.Int1, -1          // user: %5
-  %3 = metatype $@thin String.Type                // user: %5
-  // function_ref String.init(_builtinStringLiteral:utf8CodeUnitCount:isASCII:)
-  %4 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %5
-  %5 = apply %4(%0, %1, %2, %3) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %6
-  return %5                                       // id: %6
-} // end sil function '$ss5print_9separator10terminatoryypd_S2StFfA1_'
-
-// print(_:separator:terminator:)
-// Isolation: unspecified
-sil @$ss5print_9separator10terminatoryypd_S2StF : $@convention(thin) (@guaranteed Array<Any>, @guaranteed String, @guaranteed String) -> ()
-
-// Array._endMutation()
-sil shared [_semantics "array.end_mutation"] @$sSa12_endMutationyyF : $@convention(method) <Element> (@inout Array<Element>) -> () {
-[%0: noescape! **, read s0.s0.s0.v**, write v**]
-[global: ]
-// %0                                             // users: %9, %1
-bb0(%0 : $*Array<Element>):
-  %1 = struct_element_addr %0, #Array._buffer     // user: %2
-  %2 = struct_element_addr %1, #_ArrayBuffer._storage // user: %3
-  %3 = struct_element_addr %2, #_BridgeStorage.rawValue // user: %4
-  %4 = load %3                                    // user: %5
-  %5 = end_cow_mutation %4                        // user: %6
-  %6 = struct $_BridgeStorage<__ContiguousArrayStorageBase> (%5) // user: %7
-  %7 = struct $_ArrayBuffer<Element> (%6)         // user: %8
-  %8 = struct $Array<Element> (%7)                // user: %9
-  store %8 to %0                                  // id: %9
+// closure #1 in caseE_unchecked(_:)
+// Isolation: nonisolated
+sil private @$s5Cases15caseE_uncheckedySiAA12UncheckedBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed UncheckedBox) -> @out τ_0_0 for <Int> {
+// %0 "$return_value"                             // user: %8
+// %2 "x"                                         // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $UncheckedBox):
+  debug_value %2, let, name "x", argno 1          // id: %3
+  %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
+  hop_to_executor %4                              // id: %5
+  %6 = ref_element_addr %2, #UncheckedBox.value   // user: %7
+  %7 = begin_access [read] [dynamic] %6           // users: %9, %8
+  copy_addr %7 to [init] %0                       // id: %8
+  end_access %7                                   // id: %9
   %10 = tuple ()                                  // user: %11
   return %10                                      // id: %11
-} // end sil function '$sSa12_endMutationyyF'
+} // end sil function '$s5Cases15caseE_uncheckedySiAA12UncheckedBoxCYaFSiyYacfU_'
+
+// caseG_nonEscaping(_:)
+// Isolation: unspecified
+sil hidden @$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCF : $@convention(thin) (@guaranteed SendableImmutableBox) -> Int {
+// %0 "x"                                         // users: %4, %3, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
+  // function_ref closure #1 in caseG_nonEscaping(_:)
+  %2 = function_ref @$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFSiycfU_ : $@convention(thin) (@guaranteed SendableImmutableBox) -> Int // user: %4
+  strong_retain %0                                // id: %3
+  %4 = partial_apply [callee_guaranteed] %2(%0) : $@convention(thin) (@guaranteed SendableImmutableBox) -> Int // users: %13, %7, %5, %8
+  strong_retain %4                                // id: %5
+  // function_ref thunk for @escaping @callee_guaranteed () -> (@unowned Int)
+  %6 = function_ref @$sSiIegd_SiIegd_TR : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int // user: %7
+  %7 = partial_apply [callee_guaranteed] %6(%4) : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int // user: %8
+  %8 = mark_dependence %7 on %4                   // users: %10, %11
+  // function_ref closure #2 in caseG_nonEscaping(_:)
+  %9 = function_ref @$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFS2iycXEfU0_ : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int // user: %10
+  %10 = apply %9(%8) : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int // user: %14
+  %11 = destroy_not_escaped_closure %8            // user: %12
+  cond_fail %11, "non-escaping closure has escaped" // id: %12
+  strong_release %4                               // id: %13
+  return %10                                      // id: %14
+} // end sil function '$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCF'
+
+// closure #1 in caseG_nonEscaping(_:)
+// Isolation: nonisolated
+sil private @$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFSiycfU_ : $@convention(thin) (@guaranteed SendableImmutableBox) -> Int {
+// %0 "x"                                         // users: %2, %1
+bb0(%0 : @closureCapture $SendableImmutableBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
+  %2 = ref_element_addr [immutable] %0, #SendableImmutableBox.value // user: %3
+  %3 = load %2                                    // user: %4
+  return %3                                       // id: %4
+} // end sil function '$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFSiycfU_'
+
+// thunk for @escaping @callee_guaranteed () -> (@unowned Int)
+sil shared [transparent] [reabstraction_thunk] [without_actually_escaping] @$sSiIegd_SiIegd_TR : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int {
+// %0                                             // user: %1
+bb0(%0 : $@callee_guaranteed () -> Int):
+  %1 = apply %0() : $@callee_guaranteed () -> Int // user: %2
+  return %1                                       // id: %2
+} // end sil function '$sSiIegd_SiIegd_TR'
+
+// closure #2 in caseG_nonEscaping(_:)
+// Isolation: nonisolated
+sil private @$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFS2iycXEfU0_ : $@convention(thin) (@guaranteed @callee_guaranteed () -> Int) -> Int {
+// %0 "$0"                                        // users: %4, %3, %2, %1
+bb0(%0 : $@callee_guaranteed () -> Int):
+  debug_value %0, let, name "$0", argno 1         // id: %1
+  strong_retain %0                                // id: %2
+  %3 = apply %0() : $@callee_guaranteed () -> Int // user: %5
+  strong_release %0                               // id: %4
+  return %3                                       // id: %5
+} // end sil function '$s5Cases17caseG_nonEscapingySiAA20SendableImmutableBoxCFS2iycXEfU0_'
+
+// caseH_escaping(_:)
+// Isolation: unspecified
+sil hidden @$s5Cases14caseH_escapingySiAA20SendableImmutableBoxCYaF : $@convention(thin) @async (@guaranteed SendableImmutableBox) -> Int {
+// %0 "x"                                         // users: %11, %9, %1
+bb0(%0 : $SendableImmutableBox):
+  debug_value %0, let, name "x", argno 1          // id: %1
+  %2 = enum $Optional<any Actor>, #Optional.none!enumelt // users: %19, %3
+  hop_to_executor %2                              // id: %3
+  %4 = metatype $@thin Task<Int, Never>.Type      // user: %13
+  %5 = enum $Optional<String>, #Optional.none!enumelt // user: %13
+  %6 = alloc_stack $Optional<TaskPriority>        // users: %14, %13, %7
+  inject_enum_addr %6, #Optional.none!enumelt     // id: %7
+  // function_ref closure #1 in caseH_escaping(_:)
+  %8 = function_ref @$s5Cases14caseH_escapingySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %11
+  strong_retain %0                                // id: %9
+  %10 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %11
+  %11 = partial_apply [callee_guaranteed] [isolated_any] %8(%10, %0) : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> // user: %13
+  // function_ref Task<>.init(name:priority:operation:)
+  %12 = function_ref @$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfC : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // user: %13
+  %13 = apply %12<Int, Never>(%5, %6, %11, %4) : $@convention(method) <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@owned Optional<String>, @in Optional<TaskPriority>, @sil_sending @owned @isolated(any) @async @callee_guaranteed @substituted <τ_0_0> () -> @out τ_0_0 for <τ_0_0>, @thin Task<τ_0_0, Never>.Type) -> @owned Task<τ_0_0, Never> // users: %18, %17
+  dealloc_stack %6                                // id: %14
+  %15 = alloc_stack $Int                          // users: %20, %21, %17
+  // function_ref Task<>.value.getter
+  %16 = function_ref @$sScTss5NeverORs_rlE5valuexvg : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0 // user: %17
+  %17 = apply %16<Int, Never>(%15, %13) : $@convention(method) @async <τ_0_0, τ_0_1 where τ_0_0 : Sendable, τ_0_1 == Never> (@guaranteed Task<τ_0_0, Never>) -> @out τ_0_0
+  release_value %13                               // id: %18
+  hop_to_executor %2                              // id: %19
+  %20 = load %15                                  // user: %22
+  dealloc_stack %15                               // id: %21
+  return %20                                      // id: %22
+} // end sil function '$s5Cases14caseH_escapingySiAA20SendableImmutableBoxCYaF'
+
+// closure #1 in caseH_escaping(_:)
+// Isolation: nonisolated
+sil private @$s5Cases14caseH_escapingySiAA20SendableImmutableBoxCYaFSiyYacfU_ : $@convention(thin) @async @substituted <τ_0_0> (@guaranteed Optional<any Actor>, @guaranteed SendableImmutableBox) -> @out τ_0_0 for <Int> {
+// %0 "$return_value"                             // user: %8
+// %2 "x"                                         // users: %6, %3
+bb0(%0 : $*Int, %1 : $Optional<any Actor>, %2 : @closureCapture $SendableImmutableBox):
+  debug_value %2, let, name "x", argno 1          // id: %3
+  %4 = enum $Optional<any Actor>, #Optional.none!enumelt // user: %5
+  hop_to_executor %4                              // id: %5
+  %6 = ref_element_addr [immutable] %2, #SendableImmutableBox.value // user: %7
+  %7 = load %6                                    // user: %8
+  store %7 to %0                                  // id: %8
+  %9 = tuple ()                                   // user: %10
+  return %9                                       // id: %10
+} // end sil function '$s5Cases14caseH_escapingySiAA20SendableImmutableBoxCYaFSiyYacfU_'
+
+// caseJ_generic<A>(_:)
+// Isolation: unspecified
+sil hidden @$s5Cases13caseJ_genericyxxs8SendableRzlF : $@convention(thin) <T where T : Sendable> (@in_guaranteed T) -> @out T {
+// %0 "$return_value"                             // user: %3
+// %1 "x"                                         // users: %3, %2
+bb0(%0 : $*T, %1 : $*T):
+  debug_value %1, let, name "x", argno 1, expr op_deref // id: %2
+  copy_addr %1 to [init] %0                       // id: %3
+  %4 = tuple ()                                   // user: %5
+  return %4                                       // id: %5
+} // end sil function '$s5Cases13caseJ_genericyxxs8SendableRzlF'
 
 // TaskPriority.rawValue.getter
 sil [available 12.0.0] @$sScP8rawValues5UInt8Vvg : $@convention(method) (@in_guaranteed TaskPriority) -> UInt8
@@ -1217,24 +1258,34 @@ bb2(%31 : $UnsafePointer<Int8>):                  // Preds: bb0
   return %43                                      // id: %44
 } // end sil function '$sScTss5NeverORs_rlE4name8priority9operationScTyxABGSSSg_ScPSgxyYaYAcntcfcBoSRys4Int8VGXEfU_'
 
-sil_vtable ImmutableBox {
-  #ImmutableBox.init!allocator: (ImmutableBox.Type) -> (Int) -> ImmutableBox : @$s4main12ImmutableBoxCyACSicfC	// ImmutableBox.__allocating_init(_:)
-  #ImmutableBox.deinit!deallocator: @$s4main12ImmutableBoxCfD	// ImmutableBox.__deallocating_deinit
+sil_vtable PlainMutableBox {
+  #PlainMutableBox.init!allocator: (PlainMutableBox.Type) -> () -> PlainMutableBox : @$s5Cases15PlainMutableBoxCACycfC	// PlainMutableBox.__allocating_init()
+  #PlainMutableBox.deinit!deallocator: @$s5Cases15PlainMutableBoxCfD	// PlainMutableBox.__deallocating_deinit
 }
 
-sil_vtable Holder {
-  #Holder.read: (isolated Holder) -> () -> Int : @$s4main6HolderC4readSiyF	// Holder.read()
-  #Holder.init!allocator: (Holder.Type) -> () -> Holder : @$s4main6HolderCACycfC	// Holder.__allocating_init()
-  #Holder.deinit!deallocator: @$s4main6HolderCfD	// Holder.__deallocating_deinit
+sil_vtable SendableImmutableBox {
+  #SendableImmutableBox.init!allocator: (SendableImmutableBox.Type) -> (Int) -> SendableImmutableBox : @$s5Cases20SendableImmutableBoxCyACSicfC	// SendableImmutableBox.__allocating_init(_:)
+  #SendableImmutableBox.deinit!deallocator: @$s5Cases20SendableImmutableBoxCfD	// SendableImmutableBox.__deallocating_deinit
 }
 
-sil_witness_table hidden Holder: Actor module main {
-  method #Actor.unownedExecutor!getter: <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor : @$s4main6HolderCScAAAScA15unownedExecutorScevgTW	// protocol witness for Actor.unownedExecutor.getter in conformance Holder
+sil_vtable CaseCActor {
+  #CaseCActor.read: (isolated CaseCActor) -> () -> Int : @$s5Cases10CaseCActorC4readSiyF	// CaseCActor.read()
+  #CaseCActor.init!allocator: (CaseCActor.Type) -> () -> CaseCActor : @$s5Cases10CaseCActorCACycfC	// CaseCActor.__allocating_init()
+  #CaseCActor.deinit!deallocator: @$s5Cases10CaseCActorCfD	// CaseCActor.__deallocating_deinit
+}
+
+sil_vtable UncheckedBox {
+  #UncheckedBox.init!allocator: (UncheckedBox.Type) -> () -> UncheckedBox : @$s5Cases12UncheckedBoxCACycfC	// UncheckedBox.__allocating_init()
+  #UncheckedBox.deinit!deallocator: @$s5Cases12UncheckedBoxCfD	// UncheckedBox.__deallocating_deinit
+}
+
+sil_witness_table hidden CaseCActor: Actor module Cases {
+  method #Actor.unownedExecutor!getter: <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor : @$s5Cases10CaseCActorCScAAAScA15unownedExecutorScevgTW	// protocol witness for Actor.unownedExecutor.getter in conformance CaseCActor
 }
 
 
 
 // Mappings from '#fileID' to '#filePath':
-//   'main/main.swift' => '/Users/msalari/Downloads/swift6-arc-refcount-lab/Sources/ARCRefcountLab/main.swift'
+//   'Cases/Cases.swift' => '/Users/msalari/Downloads/swift6-arc-refcount-lab/Sources/ARCRefcountLab/Cases.swift'
 
 

@@ -1,6 +1,6 @@
 # Runtime source map
 
-Inspected Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796`.
+Inspected Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796`. Commit-pinned source links use `https://github.com/swiftlang/swift/blob/99659c99d7fe22212afb806e986d7ecc6496f796/` plus the path below.
 
 The stable declarations and the current implementation are deliberately separated here. The runtime header documents `swift_retainReturningCount` as atomic (lines 143–149), and similarly documents `swift_releaseReturningCount` as atomic (lines 188–197). It declares both `swift_retain`/`swift_release` and `swift_nonatomic_retain`/`swift_nonatomic_release` (lines 141–158 and 186–214).
 

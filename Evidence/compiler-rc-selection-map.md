@@ -1,6 +1,6 @@
 # Compiler ARC selection map
 
-All links below refer to Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796`.
+All links below refer to Swift commit `99659c99d7fe22212afb806e986d7ecc6496f796`. The corresponding commit-pinned URLs use `https://github.com/swiftlang/swift/blob/99659c99d7fe22212afb806e986d7ecc6496f796/` followed by the listed path and line range.
 
 | Location | Meaning | Does not prove |
 |---|---|---|

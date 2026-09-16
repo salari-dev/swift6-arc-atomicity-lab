@@ -8,13 +8,17 @@ sw_vers >> "$ROOT/Evidence/environment.txt"
 printf 'Target: %s\nArchitecture: %s\nSwift language mode: 6\nOptimization artifacts: -Onone and -O\nSimulator requested: iPhone 17\n' "$(swiftc -print-target-info | rg -o '\"triple\"\s*:\s*\"[^\"]+' | sed 's/.*\"//')" "$(uname -m)" >> "$ROOT/Evidence/environment.txt"
 printf 'Xcode: '; xcodebuild -version | tr '\n' ' ' >> "$ROOT/Evidence/environment.txt"; printf '\n' >> "$ROOT/Evidence/environment.txt"
 SRC="$ROOT/Sources/ARCRefcountLab/main.swift"
+VALID_SOURCES=("$ROOT/Sources/ARCRefcountLab/main.swift" "$ROOT/Sources/ARCRefcountLab/Cases.swift" "$ROOT/Sources/ARCRefcountLab/UnsafeEscape.swift")
 for mode in onone optimized; do
   dir="$ROOT/Evidence/CompilerOutput/main-$mode"; mkdir -p "$dir"
   flags=(); [[ "$mode" == optimized ]] && flags=(-O)
-  swiftc -swift-version 6 "${flags[@]}" -emit-silgen "$SRC" -o "$dir/main.silgen"
-  swiftc -swift-version 6 "${flags[@]}" -emit-sil "$SRC" -o "$dir/main.sil"
-  swiftc -swift-version 6 "${flags[@]}" -emit-ir "$SRC" -o "$dir/main.ll"
-  swiftc -swift-version 6 "${flags[@]}" -S "$SRC" -o "$dir/main.s"
+  for source_file in "${VALID_SOURCES[@]}"; do
+    name=${source_file:t:r}
+    swiftc -swift-version 6 "${flags[@]}" -emit-silgen "$source_file" -o "$dir/$name.silgen"
+    swiftc -swift-version 6 "${flags[@]}" -emit-sil "$source_file" -o "$dir/$name.sil"
+    swiftc -swift-version 6 "${flags[@]}" -emit-ir "$source_file" -o "$dir/$name.ll"
+    swiftc -swift-version 6 "${flags[@]}" -S "$source_file" -o "$dir/$name.s"
+  done
 done
 dir="$ROOT/Evidence/CompilerOutput/assume-single-threaded"; mkdir -p "$dir"
 swiftc -swift-version 6 -Xfrontend -assume-single-threaded -emit-ir "$SRC" -o "$dir/main.ll"

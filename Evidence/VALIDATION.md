@@ -12,6 +12,8 @@
 - [x] Controlled `AssumeSingleThreaded` IR/assembly artifacts contain non-atomic retain/release calls.
 - [x] Clean byte-identical A/B IR and assembly comparison completed at `-Onone` and `-O`.
 - [x] Hidden frontend-flag declaration and ARC selection path traced in the inspected compiler source.
+- [x] Cases A–J are represented in the source matrix; case F is a separate negative control.
+- [x] Runtime/compiler maps identify commit-pinned source URL bases.
 
 Simulator target: iPhone 17 (not Pro), UUID `08D5928E-E08E-44D0-B672-2248F89EB331`; it was booted for validation.
 
