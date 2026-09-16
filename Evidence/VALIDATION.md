@@ -10,6 +10,8 @@
 - [x] Language guarantees are separated from runtime implementation claims.
 - [x] Main executable compiles for `arm64-apple-ios18.0-simulator` using the installed iPhone Simulator SDK.
 - [x] Controlled `AssumeSingleThreaded` IR/assembly artifacts contain non-atomic retain/release calls.
+- [x] Clean byte-identical A/B IR and assembly comparison completed at `-Onone` and `-O`.
+- [x] Hidden frontend-flag declaration and ARC selection path traced in the inspected compiler source.
 
 Simulator target: iPhone 17 (not Pro), UUID `08D5928E-E08E-44D0-B672-2248F89EB331`; it was booted for validation.
 

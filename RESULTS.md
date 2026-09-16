@@ -12,6 +12,12 @@ See `Evidence/environment.txt`. The artifacts use explicit `-swift-version 6`; c
 
 ## How atomic vs non-atomic ARC is selected
 
+### Final verification of `-assume-single-threaded`
+
+The flag is an internal/hidden frontend option, not a documented stable application-development switch. Its exact source path is `Options.td` → `CompilerInvocation.cpp` → `SILOptions::AssumeSingleThreaded` → `SILModule::isDefaultAtomic()` → IRGen `Atomicity` → `GenHeap.cpp` runtime function selection. The clean A/B comparison in `Evidence/AtomicityAB/` uses byte-identical input and shows the same substitution at `-Onone` and `-O`.
+
+In the tested cases with this toolchain, actor isolation, `Sendable`, and `@unchecked Sendable` did not change the emitted atomic/non-atomic entry point. The evidence supports: “Swift 6 concurrency checking can restrict where program state is accessed, but that does not by itself cause ordinary compiler-generated ARC operations to switch to the non-atomic runtime entry points.” A precise second statement is: “`-assume-single-threaded` demonstrates a compiler path that selects non-atomic native ARC when the frontend is explicitly told to assume single-threaded execution.”
+
 The compiler source gives a concrete selector. `SILModule::isDefaultAtomic()` returns the inverse of `AssumeSingleThreaded`; SILBuilder and IRGen propagate that as `Atomicity`. `GenHeap.cpp` then selects `swift_retain/release` for Atomic and `swift_nonatomic_retain/release` for NonAtomic (subject to direct-runtime options). The full map and line references are in `Evidence/compiler-rc-selection-map.md`.
 
 The whole-tree search found non-atomic calls in runtime metadata/value-witness support (`MetadataImpl.h`) plus the runtime definitions/tracking tables. It did not find a normal Swift source construct named `Sendable`, actor isolation, or region isolation that directly selects non-atomic ARC.
