@@ -2,3 +2,7 @@
 .build.previous-*/
 .DS_Store
 swift/
+DerivedData/
+.swiftpm/
+*.xcuserstate
+*.zip

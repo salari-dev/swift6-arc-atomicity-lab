@@ -31,7 +31,7 @@ for mode in Onone O; do
   swiftc -swift-version 6 "${flags[@]}" -S "$SRC" -o "$ROOT/Evidence/AtomicityAB/normal-$mode.s"
   swiftc -swift-version 6 -Xfrontend -assume-single-threaded "${flags[@]}" -S "$SRC" -o "$ROOT/Evidence/AtomicityAB/singlethread-$mode.s"
 done
-shasum -a 256 "$SRC" > "$ROOT/Evidence/AtomicityAB/source.sha256"
+(cd "$ROOT" && shasum -a 256 Sources/ARCRefcountLab/main.swift) > "$ROOT/Evidence/AtomicityAB/source.sha256"
 set +e
 swiftc -swift-version 6 -typecheck "$ROOT/Sources/ARCRefcountLab/IllegalSharedState.swift" > "$ROOT/Evidence/Diagnostics/illegal-shared-state.txt" 2>&1
 exit_code=$?
