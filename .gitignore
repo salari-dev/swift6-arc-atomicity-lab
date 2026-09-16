@@ -1,6 +1,7 @@
 .build/
 .build.previous-*/
 .DS_Store
+__MACOSX/
 swift/
 DerivedData/
 .swiftpm/
