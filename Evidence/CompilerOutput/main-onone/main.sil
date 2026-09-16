@@ -618,9 +618,9 @@ bb4:                                              // Preds: bb3
 
 // %31                                            // user: %32
 bb5(%31 : $any Actor):                            // Preds: bb3
-  %32 = open_existential_ref %31 to $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
-  %33 = witness_method $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
-  %34 = apply %33<@opened("C72B2A2C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  %32 = open_existential_ref %31 to $@opened("A14CEE48-B212-11F1-984E-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("A14CEE48-B212-11F1-984E-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("A14CEE48-B212-11F1-984E-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("A14CEE48-B212-11F1-984E-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
   strong_release %32                              // id: %35
   %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
   %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38
@@ -855,9 +855,9 @@ bb4:                                              // Preds: bb3
 
 // %31                                            // user: %32
 bb5(%31 : $any Actor):                            // Preds: bb3
-  %32 = open_existential_ref %31 to $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
-  %33 = witness_method $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
-  %34 = apply %33<@opened("C72B6D0C-B211-11F1-BE82-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
+  %32 = open_existential_ref %31 to $@opened("A14D4938-B212-11F1-984E-9EB2AEB5078E", any Actor) Self // users: %35, %34, %34, %33
+  %33 = witness_method $@opened("A14D4938-B212-11F1-984E-9EB2AEB5078E", any Actor) Self, #Actor.unownedExecutor!getter : <Self where Self : Actor> (Self) -> () -> UnownedSerialExecutor, %32 : $@opened("A14D4938-B212-11F1-984E-9EB2AEB5078E", any Actor) Self : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %34
+  %34 = apply %33<@opened("A14D4938-B212-11F1-984E-9EB2AEB5078E", any Actor) Self>(%32) : $@convention(witness_method: Actor) <τ_0_0 where τ_0_0 : Actor> (@guaranteed τ_0_0) -> UnownedSerialExecutor // type-defs: %32; user: %36
   strong_release %32                              // id: %35
   %36 = struct_extract %34, #UnownedSerialExecutor.executor // user: %37
   %37 = enum $Optional<Builtin.Executor>, #Optional.some!enumelt, %36 // user: %38

@@ -16,6 +16,9 @@ for mode in onone optimized; do
   swiftc -swift-version 6 "${flags[@]}" -emit-ir "$SRC" -o "$dir/main.ll"
   swiftc -swift-version 6 "${flags[@]}" -S "$SRC" -o "$dir/main.s"
 done
+dir="$ROOT/Evidence/CompilerOutput/assume-single-threaded"; mkdir -p "$dir"
+swiftc -swift-version 6 -Xfrontend -assume-single-threaded -emit-ir "$SRC" -o "$dir/main.ll"
+swiftc -swift-version 6 -Xfrontend -assume-single-threaded -S "$SRC" -o "$dir/main.s"
 set +e
 swiftc -swift-version 6 -typecheck "$ROOT/Sources/ARCRefcountLab/IllegalSharedState.swift" > "$ROOT/Evidence/Diagnostics/illegal-shared-state.txt" 2>&1
 exit_code=$?
