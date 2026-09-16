@@ -39,6 +39,6 @@ set -e
 printf 'negative_control_exit=%s\n' "$exit_code" >> "$ROOT/Evidence/Diagnostics/illegal-shared-state.txt"
 swift run -c release ARCRefcountLab > "$ROOT/Evidence/runtime-output.txt"
 SIM_SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
-swiftc -swift-version 6 -sdk "$SIM_SDK" -target arm64-apple-ios18.0-simulator "$SRC" -o "$ROOT/Evidence/ARCRefcountLab-iPhone17-simulator"
+xcrun --sdk iphonesimulator swiftc -swift-version 6 -sdk "$SIM_SDK" -target arm64-apple-ios18.0-simulator "$SRC" -o "$ROOT/Evidence/ARCRefcountLab-iPhone17-simulator"
 xcrun simctl list devices available | grep 'iPhone 17 (' > "$ROOT/Evidence/simulator.txt"
 echo "Generated evidence under $ROOT/Evidence"

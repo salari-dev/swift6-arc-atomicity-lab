@@ -9,7 +9,7 @@ APP="$APP_ROOT/ARCRefcountLab.app"
 mkdir -p "$APP"
 trap 'rmdir "$APP" "$APP_ROOT" 2>/dev/null || true' EXIT
 SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
-swiftc -swift-version 6 -sdk "$SDK" -target arm64-apple-ios26.0-simulator \
+xcrun --sdk iphonesimulator swiftc -swift-version 6 -sdk "$SDK" -target arm64-apple-ios18.0-simulator \
   "$ROOT/Sources/ARCRefcountLab/main.swift" -o "$APP/ARCRefcountLab" >"$OUT/build.txt" 2>&1
 cp "$ROOT/Resources/iPhone17-Info.plist" "$APP/Info.plist"
 printf 'device_name=iPhone 17\ndevice_uuid=%s\nbundle_identifier=local.swift6.arc-refcount-lab\n' "$SIM" > "$OUT/metadata.txt"

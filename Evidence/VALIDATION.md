@@ -19,6 +19,6 @@
 - [x] Alternate official toolchain availability checked and absence documented honestly.
 - [x] Official Swift language documentation and relevant evolution proposals are cited in `official-language-sources.md`.
 
-Simulator target: iPhone 17 (not Pro), UUID `08D5928E-E08E-44D0-B672-2248F89EB331`; it was booted for validation.
+Simulator target: iPhone 17 (not Pro), UUID `08D5928E-E08E-44D0-B672-2248F89EB331`; both scripts use the installed `iPhoneSimulator26.5.sdk` and the deliberate iOS 18.0 deployment target.
 
 VALIDATION PASSED

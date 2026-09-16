@@ -1,2 +1,2 @@
-local.swift6.arc-refcount-lab: 36188
+local.swift6.arc-refcount-lab: 38228
 exit_status=0
