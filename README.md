@@ -46,7 +46,7 @@ See [the compiler selection map](Evidence/compiler-rc-selection-map.md) and [the
 ./run-simulator-validation.sh
 ```
 
-The first script regenerates compiler output, diagnostics, runtime output, A/B IR/assembly, and the simulator-targeted binary. The second rebuilds with the installed iPhoneSimulator SDK and regenerates raw install/launch evidence on iPhone 17. See [REPRODUCTION.md](REPRODUCTION.md).
+The first script regenerates compiler output, diagnostics, runtime output, A/B IR/assembly, and the simulator-targeted binary under ignored `Evidence/Generated/`. The second rebuilds with the installed iPhoneSimulator SDK and regenerates raw install/launch evidence under the same ignored directory on iPhone 17. The frozen results remain under `Evidence/`. See [REPRODUCTION.md](REPRODUCTION.md).
 
 ## Evidence map
 

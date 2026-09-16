@@ -6,3 +6,4 @@ DerivedData/
 .swiftpm/
 *.xcuserstate
 *.zip
+Evidence/Generated/

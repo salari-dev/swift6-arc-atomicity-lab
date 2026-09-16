@@ -9,7 +9,7 @@ From this directory, run both scripts in order:
 ./run-simulator-validation.sh
 ```
 
-The first script generates SILGen, canonical/optimized SIL, LLVM IR, assembly, diagnostics, runtime output, the clean A/B comparison under `Evidence/AtomicityAB/`, and an executable for `arm64-apple-ios18.0-simulator`. The second script rebuilds the minimal app for the same iOS 18.0 deployment target using the installed `iPhoneSimulator26.5.sdk`, then runs `simctl install` and `simctl launch` on iPhone 17. Raw build, install, launch, and exit-status evidence is written under `Evidence/SimulatorLaunch/`.
+The first script generates SILGen, canonical/optimized SIL, LLVM IR, assembly, diagnostics, runtime output, and simulator build artifacts under ignored `Evidence/Generated/`. The frozen A/B comparison and negative-control transcript remain under `Evidence/AtomicityAB/` and `Evidence/Diagnostics/`; regenerated copies are not tracked. The second script rebuilds the minimal app for the same iOS 18.0 deployment target using the installed `iPhoneSimulator26.5.sdk`, then runs `simctl install` and `simctl launch` on iPhone 17. Raw generated simulator evidence is written under ignored `Evidence/Generated/SimulatorLaunch/`.
 
 The negative control is checked by the first script with `swiftc -swift-version 6 -typecheck` and is expected to fail with Swift 6 concurrency diagnostics.
 

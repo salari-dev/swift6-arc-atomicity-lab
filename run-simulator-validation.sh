@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 ROOT=${0:A:h}
-OUT="$ROOT/Evidence/SimulatorLaunch"
+OUT="$ROOT/Evidence/Generated/SimulatorLaunch"
 mkdir -p "$OUT"
 SIM='08D5928E-E08E-44D0-B672-2248F89EB331'
 APP_ROOT=$(mktemp -d /tmp/ARCRefcountLab-iPhone17.XXXXXX)

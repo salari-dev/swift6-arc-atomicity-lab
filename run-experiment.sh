@@ -1,7 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 ROOT=${0:A:h}
-mkdir -p "$ROOT/Evidence/CompilerOutput" "$ROOT/Evidence/Diagnostics"
+GEN="$ROOT/Evidence/Generated"
+mkdir -p "$GEN/CompilerOutput" "$GEN/AtomicityAB" "$GEN/Diagnostics"
 swift --version > "$ROOT/Evidence/environment.txt"
 swiftc -version >> "$ROOT/Evidence/environment.txt"
 sw_vers >> "$ROOT/Evidence/environment.txt"
@@ -10,7 +11,7 @@ printf 'Xcode: '; xcodebuild -version | tr '\n' ' ' >> "$ROOT/Evidence/environme
 SRC="$ROOT/Sources/ARCRefcountLab/main.swift"
 VALID_SOURCES=("$ROOT/Sources/ARCRefcountLab/main.swift" "$ROOT/Sources/ARCRefcountLab/Cases.swift" "$ROOT/Sources/ARCRefcountLab/UnsafeEscape.swift")
 for mode in onone optimized; do
-  dir="$ROOT/Evidence/CompilerOutput/main-$mode"; mkdir -p "$dir"
+  dir="$GEN/CompilerOutput/main-$mode"; mkdir -p "$dir"
   flags=(); [[ "$mode" == optimized ]] && flags=(-O)
   for source_file in "${VALID_SOURCES[@]}"; do
     name=${source_file:t:r}
@@ -20,25 +21,24 @@ for mode in onone optimized; do
     swiftc -swift-version 6 "${flags[@]}" -S "$source_file" -o "$dir/$name.s"
   done
 done
-dir="$ROOT/Evidence/CompilerOutput/assume-single-threaded"; mkdir -p "$dir"
+dir="$GEN/CompilerOutput/assume-single-threaded"; mkdir -p "$dir"
 swiftc -swift-version 6 -Xfrontend -assume-single-threaded -emit-ir "$SRC" -o "$dir/main.ll"
 swiftc -swift-version 6 -Xfrontend -assume-single-threaded -S "$SRC" -o "$dir/main.s"
-mkdir -p "$ROOT/Evidence/AtomicityAB"
 for mode in Onone O; do
   flags=(); [[ "$mode" == O ]] && flags=(-O)
-  swiftc -swift-version 6 "${flags[@]}" -emit-ir "$SRC" -o "$ROOT/Evidence/AtomicityAB/normal-$mode.ll"
-  swiftc -swift-version 6 -Xfrontend -assume-single-threaded "${flags[@]}" -emit-ir "$SRC" -o "$ROOT/Evidence/AtomicityAB/singlethread-$mode.ll"
-  swiftc -swift-version 6 "${flags[@]}" -S "$SRC" -o "$ROOT/Evidence/AtomicityAB/normal-$mode.s"
-  swiftc -swift-version 6 -Xfrontend -assume-single-threaded "${flags[@]}" -S "$SRC" -o "$ROOT/Evidence/AtomicityAB/singlethread-$mode.s"
+  swiftc -swift-version 6 "${flags[@]}" -emit-ir "$SRC" -o "$GEN/AtomicityAB/normal-$mode.ll"
+  swiftc -swift-version 6 -Xfrontend -assume-single-threaded "${flags[@]}" -emit-ir "$SRC" -o "$GEN/AtomicityAB/singlethread-$mode.ll"
+  swiftc -swift-version 6 "${flags[@]}" -S "$SRC" -o "$GEN/AtomicityAB/normal-$mode.s"
+  swiftc -swift-version 6 -Xfrontend -assume-single-threaded "${flags[@]}" -S "$SRC" -o "$GEN/AtomicityAB/singlethread-$mode.s"
 done
-(cd "$ROOT" && shasum -a 256 Sources/ARCRefcountLab/main.swift) > "$ROOT/Evidence/AtomicityAB/source.sha256"
+(cd "$ROOT" && shasum -a 256 Sources/ARCRefcountLab/main.swift) > "$GEN/AtomicityAB/source.sha256"
 set +e
-swiftc -swift-version 6 -typecheck "$ROOT/Sources/ARCRefcountLab/IllegalSharedState.swift" > "$ROOT/Evidence/Diagnostics/illegal-shared-state.txt" 2>&1
+swiftc -swift-version 6 -typecheck "$ROOT/Sources/ARCRefcountLab/IllegalSharedState.swift" > "$GEN/Diagnostics/illegal-shared-state.txt" 2>&1
 exit_code=$?
 set -e
-printf 'negative_control_exit=%s\n' "$exit_code" >> "$ROOT/Evidence/Diagnostics/illegal-shared-state.txt"
-swift run -c release ARCRefcountLab > "$ROOT/Evidence/runtime-output.txt"
+printf 'negative_control_exit=%s\n' "$exit_code" >> "$GEN/Diagnostics/illegal-shared-state.txt"
+swift run -c release ARCRefcountLab > "$GEN/runtime-output.txt"
 SIM_SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
-xcrun --sdk iphonesimulator swiftc -swift-version 6 -sdk "$SIM_SDK" -target arm64-apple-ios18.0-simulator "$SRC" -o "$ROOT/Evidence/ARCRefcountLab-iPhone17-simulator"
-xcrun simctl list devices available | grep 'iPhone 17 (' > "$ROOT/Evidence/simulator.txt"
+xcrun --sdk iphonesimulator swiftc -swift-version 6 -sdk "$SIM_SDK" -target arm64-apple-ios18.0-simulator "$SRC" -o "$GEN/ARCRefcountLab-iPhone17-simulator"
+xcrun simctl list devices available | grep 'iPhone 17 (' > "$GEN/simulator.txt"
 echo "Generated evidence under $ROOT/Evidence"
